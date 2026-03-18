@@ -71,7 +71,7 @@ export default function TurbineSelector({ turbines, onSelect, onCreate, T }) {
           <div style={{ padding: 16, background: T.surfaceAlt, borderRadius: 10, border: `1px solid ${T.border}` }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: T.text, marginBottom: 12 }}>Turbină nouă</div>
             {[
-              ['Nume (ex: WTG 3 (92692))', name, setName],
+              ['Nume (ex: Turbina 1)', name, setName],
               ['Parc eolian', park, setPark],
               ['Locație (opțional)', location, setLocation]
             ].map(([label, val, setter]) => (

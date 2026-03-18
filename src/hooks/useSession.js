@@ -24,7 +24,7 @@ export function useSession(user) {
 
   // State per session
   const [cd, setCd] = useState(() => loadLocal('cd', {}))
-  const [rp, setRp] = useState(() => loadLocal('rp', { parc: 'Cee Caierac (Blue 2)', serie: 'WTG 3 (92692)' }))
+  const [rp, setRp] = useState(() => loadLocal('rp', { parc: '', serie: '' }))
   const [iss, setIss] = useState(() => loadLocal('iss', []))
   const [bd, setBd] = useState(() => loadLocal('bd', {}))
   const [id, setId] = useState(() => loadLocal('id', { defects: [] }))

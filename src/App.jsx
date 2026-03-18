@@ -813,7 +813,7 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
   const[_themeId,_setThemeId]=useState(()=>loadState("themeId","light"));
   const[as,setAs]=useState("report");
   const[_cd,_setCd]=useState(()=>loadState("cd",{}));
-  const[_rp,_setRp]=useState(()=>loadState("rp",{parc:"Cee Caierac (Blue 2)",serie:"WTG 3 (92692)"}));
+  const[_rp,_setRp]=useState(()=>loadState("rp",{parc:"",serie:""}));
   const[_iss,_setIss]=useState(()=>loadState("iss",[]));
   const[_bd,_setBd]=useState(()=>loadState("bd",{}));
   const[_id,_setId]=useState(()=>loadState("id",{defects:[]}));
@@ -842,7 +842,6 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
   const isPW=mainTab==="pw56";
   const[customNames,setCustomNames]=useState(()=>{try{return JSON.parse(localStorage.getItem("mm92_custom_names")||"{}") }catch{return{}}});
   const[editingName,setEditingName]=useState(null);
-  const editNameRef=useRef(null);
   const[showHistory,setShowHistory]=useState(false);
 
   // Report history
@@ -905,9 +904,20 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
     try{localStorage.setItem("mm92_custom_names",JSON.stringify(next))}catch{}
     setEditingName(null);
   };
-  // Get display name (custom or default)
   const getName=(section)=>customNames[section.id]||section.title;
   const getItemName=(item)=>customNames[`item_${item.id}`]||item.name;
+
+  // Inline edit component — self-contained, won't lose focus on parent re-render
+  const InlineEdit=useCallback(({id,defaultVal,onSave,style:s})=>{
+    const[val,setVal]=useState(defaultVal);
+    const ref=useRef(null);
+    useEffect(()=>{const t=setTimeout(()=>{if(ref.current){ref.current.focus();ref.current.select()}},100);return()=>clearTimeout(t)},[]);
+    return <input ref={ref} value={val} onChange={e=>setVal(e.target.value)}
+      onClick={e=>e.stopPropagation()} onMouseDown={e=>e.stopPropagation()}
+      onBlur={()=>onSave(id,val)}
+      onKeyDown={e=>{if(e.key==="Enter")e.target.blur();if(e.key==="Escape")setEditingName(null)}}
+      style={s}/>;
+  },[]);
 
   // Pick source: online → session, offline → local state
   const themeId = online ? session.themeId : _themeId;
@@ -1101,8 +1111,7 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
         <button onClick={()=>{if(editingName!==s.id)setAs(s.id)}} style={{flex:1,display:"flex",alignItems:"center",gap:8,padding:"9px 12px",border:"none",textAlign:"left",background:act?T.sidebarActive:"transparent",color:act?T.sidebarActiveText:T.sidebarText,cursor:"pointer",fontSize:13,fontWeight:act?700:400,borderLeft:act?`3px solid ${T.accent}`:"3px solid transparent",minHeight:40,minWidth:0}}>
           <span style={{width:22,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><SectionIcon id={s.id} size={16} color={act?T.sidebarActiveText:T.sidebarText}/></span>
           {editingName===s.id?(
-            <input key={"sbe_"+s.id} ref={el=>{if(el)setTimeout(()=>el.focus(),50)}} defaultValue={getName(s)} onClick={e=>e.stopPropagation()}
-              onBlur={e=>saveCustomName(s.id,e.target.value)} onKeyDown={e=>{if(e.key==="Enter")e.target.blur();if(e.key==="Escape")setEditingName(null)}}
+            <InlineEdit id={s.id} defaultVal={getName(s)} onSave={saveCustomName}
               style={{flex:1,fontSize:12,padding:"2px 6px",border:`1px solid ${T.accent}`,borderRadius:4,background:T.surface,color:T.text,minWidth:0,outline:"none"}}/>
           ):(
             <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{getName(s)}</span>
@@ -1207,10 +1216,7 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
           <div style={{fontSize:20,fontWeight:800,color:T.text,display:"flex",alignItems:"center",gap:10}}>
             <SectionIcon id={sec?.id} size={24} color={T.accent}/>
             {editingName===sec?.id?(
-              <input key={"edit_"+sec.id} ref={el=>{if(el)setTimeout(()=>el.focus(),50)}} defaultValue={getName(sec)} 
-                onBlur={e=>saveCustomName(sec.id,e.target.value)} 
-                onKeyDown={e=>{if(e.key==="Enter"){e.target.blur()}if(e.key==="Escape"){setEditingName(null)}}}
-                onClick={e=>e.stopPropagation()}
+              <InlineEdit id={sec.id} defaultVal={getName(sec)} onSave={saveCustomName}
                 style={{fontSize:18,fontWeight:700,padding:"4px 8px",border:`2px solid ${T.accent}`,borderRadius:6,background:T.surface,color:T.text,minWidth:200,outline:"none"}}/>
             ):(
               <span>{sec?getName(sec):""}</span>
