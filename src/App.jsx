@@ -1052,36 +1052,38 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
       style={{padding:"8px 10px",border:`1px solid ${T.border}`,borderRadius:6,fontSize:14,fontFamily:"inherit",background:T.surface,color:T.text,minHeight:42}}/></div>);
 
   const MAIN_TABS=[
-    {id:"interventii",label:"Intervenții Zilnice",icon:"📅"},
-    {id:"mentenanta",label:"Senvion MM92",icon:"📋"},
-    {id:"pw56",label:"PowerWind PW56",icon:"🌬️"},
-    {id:"documentatie",label:"Documentație",icon:"📖"},
-    {id:"ai",label:"Asistent AI",icon:"🤖"}
+    {id:"interventii",label:"Intervenții",labelFull:"Intervenții Zilnice",icon:"📅"},
+    {id:"mentenanta",label:"MM92",labelFull:"Senvion MM92",icon:"📋"},
+    {id:"pw56",label:"PW56",labelFull:"PowerWind PW56",icon:"🌬️"},
+    {id:"documentatie",label:"Docs",labelFull:"Documentație",icon:"📖"},
+    {id:"ai",label:"AI",labelFull:"Asistent AI",icon:"🤖"}
   ];
 
   return(<div style={{display:"flex",flexDirection:"column",height:"100vh",fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif",background:T.bg,color:T.text}}>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-    <style>{`@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.7;transform:scale(1.1)}}`}</style>
+    <style>{`@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.7;transform:scale(1.1)}}
+@media(max-width:768px){.topbar-logo{display:none!important}.topbar-user{display:none!important}.topbar-label-full{display:none!important}.topbar-label-short{display:inline!important}.mm92-sidebar{width:52px!important}.mm92-sidebar .sb-text{display:none!important}}
+@media(min-width:769px){.topbar-label-short{display:none!important}.topbar-label-full{display:inline!important}}`}</style>
 
     {/* ─── TOP TAB BAR ─── */}
-    <div style={{display:"flex",alignItems:"center",background:T.sidebar,borderBottom:`1px solid ${T.border}`,padding:"0 8px",minHeight:50,flexShrink:0,gap:2}}>
-      <div style={{display:"flex",alignItems:"center",gap:6,marginRight:12,paddingLeft:8}}>
-        <TurbineIcon size={20} color={T.accent}/>
-        <span style={{fontSize:13,fontWeight:800,color:T.accent,whiteSpace:"nowrap"}}>BLUE LINE</span>
+    <div style={{display:"flex",alignItems:"center",background:T.sidebar,borderBottom:`1px solid ${T.border}`,padding:"0 4px",minHeight:48,flexShrink:0,gap:0,overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
+      <div className="topbar-logo" style={{display:"flex",alignItems:"center",gap:6,marginRight:8,paddingLeft:6,flexShrink:0}}>
+        <TurbineIcon size={18} color={T.accent}/>
+        <span style={{fontSize:12,fontWeight:800,color:T.accent,whiteSpace:"nowrap"}}>BLUE LINE</span>
       </div>
       {MAIN_TABS.map(t=>(<button key={t.id} onClick={()=>{setMainTab(t.id);if(t.id==="mentenanta")setAs("report");if(t.id==="pw56")setAs("pw_report")}} style={{
-        padding:"10px 16px",border:"none",borderBottom:mainTab===t.id?`3px solid ${T.accent}`:"3px solid transparent",
+        padding:"8px 12px",border:"none",borderBottom:mainTab===t.id?`3px solid ${T.accent}`:"3px solid transparent",
         background:mainTab===t.id?T.sidebarActive:"transparent",color:mainTab===t.id?T.sidebarActiveText:T.sidebarText,
-        cursor:"pointer",fontSize:13,fontWeight:mainTab===t.id?700:500,display:"flex",alignItems:"center",gap:6,
-        whiteSpace:"nowrap",minHeight:50,transition:"all 0.15s"
-      }}><span>{t.icon}</span><span>{t.label}</span>
-        {t.id==="interventii"&&dailyLog.length>0&&<span style={{fontSize:10,fontWeight:700,background:T.accent,color:"#fff",padding:"1px 6px",borderRadius:8}}>{dailyLog.length}</span>}
+        cursor:"pointer",fontSize:12,fontWeight:mainTab===t.id?700:500,display:"flex",alignItems:"center",gap:4,
+        whiteSpace:"nowrap",minHeight:48,transition:"all 0.15s",flexShrink:0
+      }}><span>{t.icon}</span><span className="topbar-label-full">{t.labelFull}</span><span className="topbar-label-short">{t.label}</span>
+        {t.id==="interventii"&&dailyLog.length>0&&<span style={{fontSize:9,fontWeight:700,background:T.accent,color:"#fff",padding:"1px 5px",borderRadius:8}}>{dailyLog.length}</span>}
       </button>))}
       <div style={{flex:1}}/>
-      {online && <div style={{fontSize:11,color:T.sidebarText,paddingRight:8}}>
-        {profile?.full_name||user?.email}
-        {signOut&&<button onClick={signOut} style={{marginLeft:8,fontSize:10,padding:"2px 8px",background:T.nokBg,color:T.nok,border:"none",borderRadius:4,cursor:"pointer"}}>Ieșire</button>}
-      </div>}
+      <div className="topbar-user" style={{fontSize:11,color:T.sidebarText,paddingRight:6,flexShrink:0}}>
+        {online&&(profile?.full_name||user?.email)}
+        {online&&signOut&&<button onClick={signOut} style={{marginLeft:6,fontSize:10,padding:"2px 6px",background:T.nokBg,color:T.nok,border:"none",borderRadius:4,cursor:"pointer"}}>Ieșire</button>}
+      </div>
     </div>
 
     {/* ─── CONTENT AREA ─── */}
@@ -1089,10 +1091,10 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
 
     {/* ─── TAB: MENTENANȚĂ (MM92 or PW56 — sidebar + content) ─── */}
     {(mainTab==="mentenanta"||mainTab==="pw56")&&<>
-    <div style={{width:so?260:52,transition:"width 0.2s",background:T.sidebar,overflowY:"auto",overflowX:"hidden",flexShrink:0,display:"flex",flexDirection:"column",borderRight:`1px solid ${T.border}`}}>
+    <div className="mm92-sidebar" style={{width:so?260:52,transition:"width 0.2s",background:T.sidebar,overflowY:"auto",overflowX:"hidden",flexShrink:0,display:"flex",flexDirection:"column",borderRight:`1px solid ${T.border}`}}>
       <div style={{padding:10,display:"flex",alignItems:"center",gap:8,borderBottom:`1px solid ${T.border}`,minHeight:42}}>
         <button onClick={()=>setSo(p=>!p)} style={{background:"none",border:"none",color:T.sidebarText,cursor:"pointer",fontSize:20,padding:4,minWidth:32,minHeight:32}}>☰</button>
-        {so&&<span style={{fontSize:12,fontWeight:700,color:T.sidebarActiveText}}>{isPW?"PowerWind PW56":"Senvion MM92"}</span>}
+        {so&&<span className="sb-text" style={{fontSize:12,fontWeight:700,color:T.sidebarActiveText}}>{isPW?"PowerWind PW56":"Senvion MM92"}</span>}
       </div>
       {so&&<div style={{padding:"4px 0",flex:1}}>{activeSections.map(s=>{const p=gp(s,pCd);const act=as===s.id;
         return(<div key={s.id} style={{display:"flex",alignItems:"center",gap:0}}>
