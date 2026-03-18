@@ -136,7 +136,11 @@ export async function addDocument(file, onProgress) {
         })
         .select()
         .single();
-      if (!error && data) {
+      if (error) {
+        console.error("KB cloud save error:", error);
+        doc.cloudError = error.message;
+        // Fall through to local save
+      } else if (data) {
         doc.id = data.id;
         doc.cloud = true;
         _cache = [doc, ...(_cache || [])];

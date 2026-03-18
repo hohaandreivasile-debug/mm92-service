@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { FileText, BookOpen } from "lucide-react";
 import { loadKnowledgeBase, addDocument, removeDocument } from "../lib/knowledgeBase";
+import { supabase, isOnline } from "../lib/supabase";
 
 export default function Documentation({ T }) {
   const [kb, setKb] = useState([]);
@@ -9,11 +10,24 @@ export default function Documentation({ T }) {
   const [uploadProgress, setUploadProgress] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [previewDoc, setPreviewDoc] = useState(null);
+  const [cloudStatus, setCloudStatus] = useState("checking"); // checking, ok, error, offline
   const fileRef = useRef(null);
 
   const [loadingKb, setLoadingKb] = useState(true);
 
-  useEffect(() => { loadKnowledgeBase().then(docs => { setKb(docs); setLoadingKb(false); }).catch(() => setLoadingKb(false)); }, []);
+  useEffect(() => {
+    // Check cloud connectivity
+    const checkCloud = async () => {
+      if (!isOnline() || !supabase) { setCloudStatus("offline"); return; }
+      try {
+        const { error } = await supabase.from('knowledge_docs').select('id').limit(1);
+        setCloudStatus(error ? "error" : "ok");
+        if (error) console.error("KB table check:", error.message);
+      } catch { setCloudStatus("error"); }
+    };
+    checkCloud();
+    loadKnowledgeBase().then(docs => { setKb(docs); setLoadingKb(false); }).catch(() => setLoadingKb(false));
+  }, []);
 
   const handleUpload = async (files) => {
     for (const file of Array.from(files)) {
@@ -25,7 +39,8 @@ export default function Documentation({ T }) {
           setUploadProgress(`${file.name}: pagina ${page}/${total}`)
         );
         setKb(await loadKnowledgeBase());
-        setUploadProgress(`✓ ${file.name} — ${doc.pages} pagini, ${doc.textLength.toLocaleString()} caractere extrase`);
+        const status = doc.cloud ? "☁️ Salvat în cloud" : doc.cloudError ? `⚠️ Cloud eroare: ${doc.cloudError} (salvat local)` : "💾 Salvat local";
+        setUploadProgress(`✓ ${file.name} — ${doc.pages} pagini, ${doc.textLength.toLocaleString()} caractere • ${status}`);
       } catch (e) {
         setUploadProgress(`✗ ${file.name}: ${e.message}`);
       }
@@ -78,8 +93,20 @@ export default function Documentation({ T }) {
   // ─── MAIN VIEW ───
   return (<div>
     <h2 style={{ fontSize: 18, color: T.text, marginBottom: 6 }}>Documentație & Manuale</h2>
-    <div style={{ fontSize: 13, color: T.textSec, marginBottom: 14 }}>
-      Încărcați manuale PDF — textul se extrage automat și este folosit de Asistentul AI pentru analize, sugestii și răspunsuri contextualizate.
+    <div style={{ fontSize: 13, color: T.textSec, marginBottom: 10 }}>
+      Încărcați manuale PDF — textul se extrage automat și este folosit de Asistentul AI.
+    </div>
+
+    {/* Cloud status */}
+    <div style={{ padding: "8px 14px", borderRadius: 8, marginBottom: 14, fontSize: 12, display: "flex", alignItems: "center", gap: 8,
+      background: cloudStatus === "ok" ? T.okBg : cloudStatus === "error" ? T.nokBg : cloudStatus === "offline" ? T.warnBg : T.surfaceAlt,
+      color: cloudStatus === "ok" ? T.ok : cloudStatus === "error" ? T.nok : cloudStatus === "offline" ? T.warn : T.textMuted,
+      border: `1px solid ${cloudStatus === "ok" ? T.ok+"33" : cloudStatus === "error" ? T.nok+"33" : T.border}`
+    }}>
+      {cloudStatus === "checking" && "⏳ Se verifică conexiunea cloud..."}
+      {cloudStatus === "ok" && "☁️ Cloud activ — documentele se salvează online, vizibile pentru toți"}
+      {cloudStatus === "error" && <>❌ Tabelul <code style={{background:"rgba(0,0,0,0.1)",padding:"1px 4px",borderRadius:3}}>knowledge_docs</code> nu e accesibil. Verificați SQL-ul în Supabase. Documentele se salvează doar local.</>}
+      {cloudStatus === "offline" && "💾 Mod offline — documentele se salvează local în browser"}
     </div>
 
     {/* Upload */}
