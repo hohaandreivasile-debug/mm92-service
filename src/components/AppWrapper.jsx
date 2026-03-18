@@ -16,7 +16,6 @@ const DEFAULT_T = {
 export default function AppWrapper() {
   const { user, profile, loading, signIn, signOut, isOnline: online } = useAuth()
   const session = useSession(user)
-  const [turbineSelected, setTurbineSelected] = useState(!online) // skip in offline mode
 
   if (loading) {
     return (
@@ -44,29 +43,13 @@ export default function AppWrapper() {
     return <Login onLogin={signIn} T={DEFAULT_T} />
   }
 
-  // Logged in but no turbine selected → show selector (online only)
-  if (online && !turbineSelected) {
-    return (
-      <TurbineSelector
-        turbines={session.turbines}
-        onSelect={async (t) => {
-          await session.selectTurbine(t)
-          setTurbineSelected(true)
-        }}
-        onCreate={session.createTurbine}
-        T={DEFAULT_T}
-      />
-    )
-  }
-
-  // Ready → render main app with session data
+  // Go directly to main app (turbine selection is inside the app via fleet.js)
   return (
     <App
       session={session}
       user={user}
       profile={profile}
       signOut={signOut}
-      onChangeTurbine={() => setTurbineSelected(false)}
       isOnlineMode={online}
     />
   )
