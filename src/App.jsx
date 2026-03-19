@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react"
 import { ClipboardList, AlertTriangle, BarChart3, ShieldCheck, Search, Wrench, Settings, RotateCcw, CircleDot, Circle, Lock, Cog, Zap, Link2, Box, Droplets, Wind, Compass, ArrowUpDown, Plug, Home, Building, ArrowUp, Building2, Server, Thermometer, FileCheck, Eye, Camera, PenTool, Disc, RefreshCw, FileText, BookOpen, CalendarDays } from "lucide-react";
 import { SECTIONS_PW56 } from "./data/sectionsPW56";
 import { FLEET, getAllTurbines, getParks } from "./data/fleet";
+import { syncMM92, syncPW56, syncDailyLog, syncHistoryMM92, syncHistoryPW56, syncCustomNames, loadAllFromCloud, onSyncStatusChange, KEYS } from "./lib/cloudSync";
 
 const AIAssistantLazy = lazy(() => import("./components/AIAssistant"));
 function AIAssistantView({T,dailyLog}){
@@ -837,7 +838,47 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
 
   const[so,setSo]=useState(true);
   const[lastSaved,setLastSaved]=useState(null);
+  const[cloudSync,setCloudSync]=useState(""); // sync status display
   const loadFileRef=useRef(null);
+
+  // ─── CLOUD LOAD ON MOUNT ───
+  useEffect(()=>{
+    if(!online) return;
+    loadAllFromCloud().then(cloud=>{
+      if(!cloud) return;
+      // MM92
+      if(cloud[KEYS.MM92]){
+        const d=cloud[KEYS.MM92];
+        if(d.cd) _setCd(d.cd); if(d.rp) _setRp(d.rp); if(d.iss) _setIss(d.iss);
+        if(d.bd) _setBd(d.bd); if(d.sg) _setSg(d.sg);
+        if(d.photos) _setPhotos(d.photos); if(d.itemPhotos) _setItemPhotos(d.itemPhotos);
+        if(d.procedures) _setProcedures(d.procedures);
+        if(d.themeId) _setThemeId(d.themeId);
+      }
+      // PW56
+      if(cloud[KEYS.PW56]){
+        const d=cloud[KEYS.PW56];
+        if(d.cd) setPwCd(d.cd); if(d.rp) setPwRp(d.rp); if(d.iss) setPwIss(d.iss);
+        if(d.bd) setPwBd(d.bd); if(d.sg) setPwSg(d.sg);
+        if(d.photos) setPwPhotos(d.photos); if(d.itemPhotos) setPwItemPhotos(d.itemPhotos);
+        if(d.procedures) setPwProcedures(d.procedures);
+      }
+      // Daily log
+      if(cloud[KEYS.DAILY]) _setDailyLog(cloud[KEYS.DAILY]);
+      // Histories
+      if(cloud[KEYS.HIST_MM92]) setMm92History(cloud[KEYS.HIST_MM92]);
+      if(cloud[KEYS.HIST_PW56]) setPw56History(cloud[KEYS.HIST_PW56]);
+      // Custom names
+      if(cloud[KEYS.CUSTOM_NAMES]) setCustomNames(cloud[KEYS.CUSTOM_NAMES]);
+      setCloudSync("☁️ Date sincronizate");
+    }).catch(()=>{});
+    // Listen for sync status
+    onSyncStatusChange(s=>{
+      if(s==="saving") setCloudSync("☁️ Se sincronizează...");
+      else if(s==="saved") setCloudSync("☁️ Salvat "+new Date().toLocaleTimeString("ro-RO"));
+      else if(s==="error") setCloudSync("⚠️ Eroare sync");
+    });
+  },[]);
   const[mainTab,setMainTab]=useState("interventii");
   const isPW=mainTab==="pw56";
   const[customNames,setCustomNames]=useState(()=>{try{return JSON.parse(localStorage.getItem("mm92_custom_names")||"{}") }catch{return{}}});
@@ -853,8 +894,8 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
   const histKey=isPW?HIST_PW56:HIST_MM92;
 
   // Save history to localStorage
-  useEffect(()=>{try{localStorage.setItem(HIST_MM92,JSON.stringify(mm92History))}catch{}},[mm92History]);
-  useEffect(()=>{try{localStorage.setItem(HIST_PW56,JSON.stringify(pw56History))}catch{}},[pw56History]);
+  useEffect(()=>{try{localStorage.setItem(HIST_MM92,JSON.stringify(mm92History))}catch{};syncHistoryMM92(mm92History)},[mm92History]);
+  useEffect(()=>{try{localStorage.setItem(HIST_PW56,JSON.stringify(pw56History))}catch{};syncHistoryPW56(pw56History)},[pw56History]);
 
   // Save current report to history
   const saveReportToHistory=()=>{
@@ -901,6 +942,7 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
     if(!name.trim()) delete next[id];
     setCustomNames(next);
     try{localStorage.setItem("mm92_custom_names",JSON.stringify(next))}catch{}
+    syncCustomNames(next);
   };
   const getName=(section)=>customNames[section.id]||section.title;
   const getItemName=(item)=>customNames[`item_${item.id}`]||item.name;
@@ -941,6 +983,9 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
     const timer=setTimeout(()=>{
       saveAllToStorage(state);
       setLastSaved(new Date().toLocaleTimeString("ro-RO"));
+      // Cloud sync
+      syncMM92(state);
+      syncDailyLog(state.dailyLog);
     },500);
     return()=>clearTimeout(timer);
   },[_themeId,_cd,_rp,_iss,_bd,_id,_sg,_photos,_itemPhotos,_procedures,_dailyLog, online, session?.syncStatus]);
@@ -948,7 +993,10 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
   // Auto-save PW56 data
   useEffect(()=>{
     const state={cd:pwCd,rp:pwRp,iss:pwIss,bd:pwBd,sg:pwSg,photos:pwPhotos,itemPhotos:pwItemPhotos,procedures:pwProcedures};
-    const timer=setTimeout(()=>{try{localStorage.setItem(PW_KEY,JSON.stringify(state))}catch{}},500);
+    const timer=setTimeout(()=>{
+      try{localStorage.setItem(PW_KEY,JSON.stringify(state))}catch{}
+      syncPW56(state);
+    },500);
     return()=>clearTimeout(timer);
   },[pwCd,pwRp,pwIss,pwBd,pwSg,pwPhotos,pwItemPhotos,pwProcedures]);
 
@@ -1133,7 +1181,8 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
           </button>
         </div>
         <input ref={loadFileRef} type="file" accept=".json" onChange={loadFromFile} style={{display:"none"}}/>
-        {lastSaved&&<div style={{fontSize:10,color:T.ok,textAlign:"center",padding:"2px 0"}}>✓ {lastSaved}</div>}
+        {lastSaved&&<div style={{fontSize:10,color:T.ok,textAlign:"center",padding:"2px 0"}}>✓ Local: {lastSaved}</div>}
+        {cloudSync&&<div style={{fontSize:10,color:cloudSync.includes("⚠️")?T.warn:T.accent,textAlign:"center",padding:"2px 0"}}>{cloudSync}</div>}
         <div style={{fontSize:9,color:T.textMuted,textAlign:"center"}}>{online?"☁️ Mod online — sincronizare automată":"💾 Mod offline — auto-save local"}</div>
       </div>}
     </div>
