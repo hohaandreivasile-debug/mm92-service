@@ -841,7 +841,6 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
   const[mainTab,setMainTab]=useState("interventii");
   const isPW=mainTab==="pw56";
   const[customNames,setCustomNames]=useState(()=>{try{return JSON.parse(localStorage.getItem("mm92_custom_names")||"{}") }catch{return{}}});
-  const[editingName,setEditingName]=useState(null);
   const[showHistory,setShowHistory]=useState(false);
 
   // Report history
@@ -902,22 +901,9 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
     if(!name.trim()) delete next[id];
     setCustomNames(next);
     try{localStorage.setItem("mm92_custom_names",JSON.stringify(next))}catch{}
-    setEditingName(null);
   };
   const getName=(section)=>customNames[section.id]||section.title;
   const getItemName=(item)=>customNames[`item_${item.id}`]||item.name;
-
-  // Inline edit component — self-contained, won't lose focus on parent re-render
-  const InlineEdit=useCallback(({id,defaultVal,onSave,style:s})=>{
-    const[val,setVal]=useState(defaultVal);
-    const ref=useRef(null);
-    useEffect(()=>{const t=setTimeout(()=>{if(ref.current){ref.current.focus();ref.current.select()}},100);return()=>clearTimeout(t)},[]);
-    return <input ref={ref} value={val} onChange={e=>setVal(e.target.value)}
-      onClick={e=>e.stopPropagation()} onMouseDown={e=>e.stopPropagation()}
-      onBlur={()=>onSave(id,val)}
-      onKeyDown={e=>{if(e.key==="Enter")e.target.blur();if(e.key==="Escape")setEditingName(null)}}
-      style={s}/>;
-  },[]);
 
   // Pick source: online → session, offline → local state
   const themeId = online ? session.themeId : _themeId;
@@ -1108,20 +1094,15 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
       </div>
       {so&&<div style={{padding:"4px 0",flex:1}}>{activeSections.map(s=>{const p=gp(s,pCd);const act=as===s.id;
         return(<div key={s.id} style={{display:"flex",alignItems:"center",gap:0}}>
-        <button onClick={()=>{if(editingName!==s.id)setAs(s.id)}} style={{flex:1,display:"flex",alignItems:"center",gap:8,padding:"9px 12px",border:"none",textAlign:"left",background:act?T.sidebarActive:"transparent",color:act?T.sidebarActiveText:T.sidebarText,cursor:"pointer",fontSize:13,fontWeight:act?700:400,borderLeft:act?`3px solid ${T.accent}`:"3px solid transparent",minHeight:40,minWidth:0}}>
+        <button onClick={()=>setAs(s.id)} style={{flex:1,display:"flex",alignItems:"center",gap:8,padding:"9px 12px",border:"none",textAlign:"left",background:act?T.sidebarActive:"transparent",color:act?T.sidebarActiveText:T.sidebarText,cursor:"pointer",fontSize:13,fontWeight:act?700:400,borderLeft:act?`3px solid ${T.accent}`:"3px solid transparent",minHeight:40,minWidth:0}}>
           <span style={{width:22,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><SectionIcon id={s.id} size={16} color={act?T.sidebarActiveText:T.sidebarText}/></span>
-          {editingName===s.id?(
-            <InlineEdit id={s.id} defaultVal={getName(s)} onSave={saveCustomName}
-              style={{flex:1,fontSize:12,padding:"2px 6px",border:`1px solid ${T.accent}`,borderRadius:4,background:T.surface,color:T.text,minWidth:0,outline:"none"}}/>
-          ):(
-            <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{getName(s)}</span>
-          )}
+          <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{getName(s)}</span>
           {p&&<span style={{fontSize:10,fontWeight:700,color:p.c===p.t&&p.t>0?T.ok:T.sidebarText}}>{p.c}/{p.t}</span>}
           {s.id==="photos"&&pPhotos.length>0&&<span style={{fontSize:10,fontWeight:700,color:T.accent,background:T.accentLight,padding:"1px 6px",borderRadius:8}}>{pPhotos.length}</span>}
           {(s.id==="pw_photos")&&pPhotos.length>0&&<span style={{fontSize:10,fontWeight:700,color:T.accent,background:T.accentLight,padding:"1px 6px",borderRadius:8}}>{pPhotos.length}</span>}
           {(s.id==="procedures"||s.id==="pw_procedures")&&pProcedures.length>0&&<span style={{fontSize:10,fontWeight:700,color:T.accent,background:T.accentLight,padding:"1px 6px",borderRadius:8}}>{pProcedures.length}</span>}
         </button>
-        {act&&editingName!==s.id&&<button onClick={e=>{e.stopPropagation();setEditingName(s.id)}} style={{width:28,height:28,border:"none",background:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,padding:0}}>
+        {act&&<button onClick={e=>{e.stopPropagation();const n=prompt("Redenumire secțiune:",getName(s));if(n!==null)saveCustomName(s.id,n)}} style={{width:28,height:28,border:"none",background:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,padding:0}}>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={T.sidebarText} strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>}
         </div>)})}</div>}
@@ -1215,13 +1196,8 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18,paddingBottom:12,borderBottom:`2px solid ${T.border}`}}>
           <div style={{fontSize:20,fontWeight:800,color:T.text,display:"flex",alignItems:"center",gap:10}}>
             <SectionIcon id={sec?.id} size={24} color={T.accent}/>
-            {editingName===sec?.id?(
-              <InlineEdit id={sec.id} defaultVal={getName(sec)} onSave={saveCustomName}
-                style={{fontSize:18,fontWeight:700,padding:"4px 8px",border:`2px solid ${T.accent}`,borderRadius:6,background:T.surface,color:T.text,minWidth:200,outline:"none"}}/>
-            ):(
-              <span>{sec?getName(sec):""}</span>
-            )}
-            {sec&&editingName!==sec?.id&&<button onClick={e=>{e.stopPropagation();e.preventDefault();setEditingName(sec.id)}} title="Redenumește secțiunea" style={{width:30,height:30,borderRadius:6,border:`1px solid ${T.accent}44`,background:T.accentLight,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <span>{sec?getName(sec):""}</span>
+            {sec&&<button onClick={()=>{const n=prompt("Redenumire secțiune:",getName(sec));if(n!==null)saveCustomName(sec.id,n)}} title="Redenumește secțiunea" style={{width:30,height:30,borderRadius:6,border:`1px solid ${T.accent}44`,background:T.accentLight,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.accent} strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>}
           </div>
