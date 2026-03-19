@@ -33,7 +33,7 @@ async function callClaude(messages, { maxTokens = 2000, system } = {}) {
 async function callGemini(prompt, { imageData, system, maxTokens = 2000 } = {}) {
   const key = getGeminiKey();
   if (!key) throw new Error("Gemini API key lipsă");
-  const model = "gemini-2.0-flash";
+  const model = "gemini-2.5-flash";
   const url = `${GEMINI_URL}/${model}:generateContent?key=${key}`;
   
   const parts = [];
