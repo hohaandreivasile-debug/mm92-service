@@ -1024,7 +1024,7 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
     return()=>clearTimeout(timer);
   },[pwCd,pwRp,pwIss,pwBd,pwSg,pwPhotos,pwItemPhotos,pwProcedures]);
 
-  const T=THEMES[themeId]||THEMES.light;
+  const T=THEMES[themeId]||THEMES.industrial;
   // Active protocol sections depend on mainTab
   const activeSections=isPW?SECTIONS_PW56:SECTIONS;
   const sec=activeSections.find(s=>s.id===as);
