@@ -153,7 +153,7 @@ function shareText(entry) {
   const ti = INT_TYPES.find(t => t.value === entry.type) || { label: entry.type };
   const si = STATUS_TYPES.find(s => s.value === entry.status) || { label: entry.status };
   const isRemote = entry.mode === "remote";
-  let txt = `${isRemote ? "🖥️ INTERVENȚIE REMOTĂ" : "🔧 INTERVENȚIE LOCALĂ"} — Blue Line Energy\n`;
+  let txt = `${isRemote ? "🖥️ INTERVENȚIE REMOTE" : "🔧 INTERVENȚIE LOCALĂ"} — Blue Line Energy\n`;
   txt += `━━━━━━━━━━━━━━━━━━━━\n`;
   txt += `📅 ${entry.date} ${entry.time}\n`;
   if (entry.park) txt += `📍 ${entry.park}`;
@@ -207,8 +207,8 @@ h1{font-size:18px;color:#0c1929;border-bottom:3px solid #2563eb;padding-bottom:6
 .pg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
 .pg img{width:100%;height:120px;object-fit:cover;border-radius:4px;border:1px solid #e2e8f0}
 @media print{body{padding:12px}}</style></head><body>`;
-  h += `<div style="display:flex;justify-content:space-between;margin-bottom:16px"><div><div style="font-size:16px;font-weight:800;color:#2563eb">BLUE LINE ENERGY</div><div style="font-size:11px;color:#64748b">${isRemote ? "Intervenție Remotă" : "Intervenție Locală"} — ${e(entry.turbineType || "")}</div></div><div style="text-align:right;font-size:10px;color:#64748b">Data: ${e(entry.date)}<br>Ora: ${e(entry.time)}</div></div>`;
-  h += `<h1>${isRemote ? "Raport Intervenție Remotă" : "Raport Intervenție Locală"}${entry.priority === "urgent" ? ' <span style="color:#dc2626">— URGENT</span>' : ""}${entry.planned === false ? ' <span style="color:#d97706">— NEPLANIFICATĂ</span>' : ""}</h1>`;
+  h += `<div style="display:flex;justify-content:space-between;margin-bottom:16px"><div><div style="font-size:16px;font-weight:800;color:#2563eb">BLUE LINE ENERGY</div><div style="font-size:11px;color:#64748b">${isRemote ? "Intervenție Remote" : "Intervenție Locală"} — ${e(entry.turbineType || "")}</div></div><div style="text-align:right;font-size:10px;color:#64748b">Data: ${e(entry.date)}<br>Ora: ${e(entry.time)}</div></div>`;
+  h += `<h1>${isRemote ? "Raport Intervenție Remote" : "Raport Intervenție Locală"}${entry.priority === "urgent" ? ' <span style="color:#dc2626">— URGENT</span>' : ""}${entry.planned === false ? ' <span style="color:#d97706">— NEPLANIFICATĂ</span>' : ""}</h1>`;
   h += `<div class="row"><div class="col"><div class="lbl">Parc</div><div class="val">${e(entry.park)}</div></div><div class="col"><div class="lbl">Turbina</div><div class="val">${e(entry.turbine)}</div></div><div class="col"><div class="lbl">Nr. Serie</div><div class="val">${e(entry.serial)}</div></div></div>`;
   h += `<div class="row"><div class="col"><div class="lbl">Data</div><div class="val">${e(entry.date)}</div></div><div class="col"><div class="lbl">Ora</div><div class="val">${e(entry.time)}</div></div><div class="col"><div class="lbl">Durată</div><div class="val">${e(entry.duration) || "—"} ore</div></div></div>`;
   h += `<div class="row"><div class="col"><div class="lbl">Tip</div><div class="val"><span class="badge" style="background:${ti.color}18;color:${ti.color}">${e(ti.label)}</span></div></div><div class="col"><div class="lbl">Status</div><div class="val"><span class="badge" style="background:${si.color}18;color:${si.color}">${e(si.label)}</span></div></div></div>`;
@@ -284,7 +284,7 @@ export default function DailyLog({ T, dailyLog, setDailyLog }) {
         <button onClick={() => setActiveId(null)} style={{ padding: "8px 14px", border: `1px solid ${T.border}`, borderRadius: 8, background: T.surface, cursor: "pointer", fontSize: 13, fontWeight: 600, color: T.text, minHeight: 40, display: "flex", alignItems: "center", gap: 6 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7" /></svg> Înapoi
         </button>
-        <span style={{ padding: "4px 12px", borderRadius: 6, background: isRemote ? "#4f46e518" : "#05966918", color: isRemote ? "#4f46e5" : "#059669", fontWeight: 700, fontSize: 13 }}>{isRemote ? "🖥️ REMOTĂ" : "🔧 LOCALĂ"}</span>
+        <span style={{ padding: "4px 12px", borderRadius: 6, background: isRemote ? "#4f46e518" : "#05966918", color: isRemote ? "#4f46e5" : "#059669", fontWeight: 700, fontSize: 13 }}>{isRemote ? "🖥️ REMOTE" : "🔧 LOCALĂ"}</span>
         {!active.planned && <span style={{ padding: "4px 10px", borderRadius: 6, background: T.warnBg, color: T.warn, fontWeight: 700, fontSize: 12 }}>NEPLANIFICATĂ</span>}
         {active.priority === "urgent" && <span style={{ padding: "4px 10px", borderRadius: 6, background: T.nokBg, color: T.nok, fontWeight: 700, fontSize: 12 }}>URGENT</span>}
         <span style={{ flex: 1 }} />
@@ -393,7 +393,7 @@ export default function DailyLog({ T, dailyLog, setDailyLog }) {
       </select>
       <button onClick={() => { setFilterDate(""); setFilterPark(""); }} style={{ padding: "8px 12px", border: `1px solid ${T.border}`, borderRadius: 6, background: T.surface, color: T.textMuted, cursor: "pointer", fontSize: 12, minHeight: 42 }}>Resetare</button>
       <button onClick={() => addEntry(mode)} style={{ marginLeft: "auto", padding: "10px 18px", background: T.accent, color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700, fontSize: 14, minHeight: 42, display: "flex", alignItems: "center", gap: 6 }}>
-        <CalendarDays size={16} /> + {mode === "remote" ? "Intervenție remotă" : "Intervenție locală"}
+        <CalendarDays size={16} /> + {mode === "remote" ? "Intervenție remote" : "Intervenție locală"}
       </button>
     </div>
 
@@ -404,7 +404,7 @@ export default function DailyLog({ T, dailyLog, setDailyLog }) {
     </div>}
 
     {filtered.length === 0 && <div style={{ padding: 28, textAlign: "center", color: T.textMuted, fontSize: 14, background: T.surfaceAlt, borderRadius: 8 }}>
-      Nicio intervenție {mode === "remote" ? "remotă" : "locală"}{filterDate || filterPark ? " pentru filtrele selectate" : ""}. Apăsați butonul de mai sus.
+      Nicio intervenție {mode === "remote" ? "remote" : "locală"}{filterDate || filterPark ? " pentru filtrele selectate" : ""}. Apăsați butonul de mai sus.
     </div>}
 
     {/* Cards */}

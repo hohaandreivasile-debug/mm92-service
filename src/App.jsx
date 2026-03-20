@@ -24,6 +24,11 @@ function VisualGalleryView({T}){
   return <Suspense fallback={<div style={{padding:20,color:T.textMuted}}>Se încarcă...</div>}><VisualGalleryLazy T={T}/></Suspense>;
 }
 
+const WelcomeLazy = lazy(() => import("./components/Welcome"));
+function WelcomeView({T,onNavigate,stats}){
+  return <Suspense fallback={null}><WelcomeLazy T={T} onNavigate={onNavigate} stats={stats}/></Suspense>;
+}
+
 const DailyLogLazy = lazy(() => import("./components/DailyLog"));
 function DailyLogView({T,dailyLog,setDailyLog}){
   return <Suspense fallback={<div style={{padding:20,color:T.textMuted}}>Se încarcă...</div>}><DailyLogLazy T={T} dailyLog={dailyLog} setDailyLog={setDailyLog}/></Suspense>;
@@ -895,7 +900,7 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
       else if(s==="error") setCloudSync("⚠️ Eroare sync");
     });
   },[]);
-  const[mainTab,setMainTab]=useState("interventii");
+  const[mainTab,setMainTab]=useState("home");
   const isPW=mainTab==="pw56";
   const[customNames,setCustomNames]=useState(()=>{try{return JSON.parse(localStorage.getItem("mm92_custom_names")||"{}") }catch{return{}}});
   const[showHistory,setShowHistory]=useState(false);
@@ -1120,6 +1125,7 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
       style={{padding:"8px 10px",border:`1px solid ${T.border}`,borderRadius:6,fontSize:14,fontFamily:"inherit",background:T.surface,color:T.text,minHeight:42}}/></div>);
 
   const MAIN_TABS=[
+    {id:"home",label:"Acasă",labelFull:"Acasă",icon:"🏠"},
     {id:"interventii",label:"Intervenții",labelFull:"Intervenții Zilnice",icon:"📅"},
     {id:"mentenanta",label:"MM92",labelFull:"Senvion MM92",icon:"📋"},
     {id:"pw56",label:"PW56",labelFull:"PowerWind PW56",icon:"🌬️"},
@@ -1138,14 +1144,8 @@ input,select,textarea,button{font-family:inherit}
 
     {/* ─── TOP TAB BAR ─── */}
     <div style={{display:"flex",alignItems:"center",background:T.sidebar,padding:"0 6px",minHeight:52,flexShrink:0,gap:0,overflowX:"auto",WebkitOverflowScrolling:"touch",borderBottom:`1px solid ${T.border}`,backdropFilter:"blur(12px)"}}>
-      <div className="topbar-logo" style={{display:"flex",alignItems:"center",gap:8,marginRight:12,paddingLeft:8,flexShrink:0}}>
-        <div style={{width:32,height:32,borderRadius:8,background:`linear-gradient(135deg,${T.accent},${T.ok})`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <TurbineIcon size={18} color="#fff"/>
-        </div>
-        <div style={{display:"flex",flexDirection:"column"}}>
-          <span style={{fontSize:13,fontWeight:700,color:"#fff",letterSpacing:"0.5px"}}>BLUE LINE</span>
-          <span style={{fontSize:9,color:T.sidebarText,letterSpacing:"1px",textTransform:"uppercase"}}>Energy Service</span>
-        </div>
+      <div className="topbar-logo" onClick={()=>setMainTab("home")} style={{display:"flex",alignItems:"center",gap:8,marginRight:12,paddingLeft:8,flexShrink:0,cursor:"pointer"}}>
+        <img src="/logo.png" alt="Blue Line Energy" style={{height:28}}/>
       </div>
       {MAIN_TABS.map(t=>(<button key={t.id} onClick={()=>{setMainTab(t.id);if(t.id==="mentenanta")setAs("report");if(t.id==="pw56")setAs("pw_report")}} style={{
         padding:"10px 14px",border:"none",borderBottom:mainTab===t.id?`2px solid ${T.accent}`:"2px solid transparent",
@@ -1165,6 +1165,24 @@ input,select,textarea,button{font-family:inherit}
 
     {/* ─── CONTENT AREA ─── */}
     <div style={{flex:1,display:"flex",overflow:"hidden"}}>
+
+    {/* ─── TAB: HOME ─── */}
+    {mainTab==="home"&&<WelcomeView T={T} stats={{
+      localCount:dailyLog.filter(e=>(e.mode||"local")==="local").length||undefined,
+      remoteCount:dailyLog.filter(e=>e.mode==="remote").length||undefined,
+      totalInterventions:dailyLog.length,
+      mm92Progress:(()=>{const s=SECTIONS.filter(s=>s.items.length>0);const t=s.reduce((a,s)=>a+s.items.flatMap(i=>[i,...(i.subs||[])]).length,0);const c=s.reduce((a,s)=>a+s.items.flatMap(i=>[i,...(i.subs||[])]).filter(i=>cd[i.id]?.ok).length,0);return t?Math.round(c/t*100)+"%":undefined})(),
+      pw56Progress:(()=>{const s=SECTIONS_PW56.filter(s=>s.items.length>0);const t=s.reduce((a,s)=>a+s.items.flatMap(i=>[i,...(i.subs||[])]).length,0);const c=s.reduce((a,s)=>a+s.items.flatMap(i=>[i,...(i.subs||[])]).filter(i=>pwCd[i.id]?.ok).length,0);return t?Math.round(c/t*100)+"%":undefined})(),
+      docsCount:undefined,
+      galleryCount:undefined
+    }} onNavigate={(tab)=>{
+      if(tab==="interventii_remote"){setMainTab("interventii");return}
+      if(tab==="documentatie_gallery"){setMainTab("documentatie");setAs("gallery");return}
+      if(tab==="mentenanta_history"){setMainTab("mentenanta");setAs("report");return}
+      if(tab==="mentenanta"){setAs("report")}
+      if(tab==="pw56"){setAs("pw_report")}
+      setMainTab(tab);
+    }}/>}
 
     {/* ─── TAB: MENTENANȚĂ (MM92 or PW56 — sidebar + content) ─── */}
     {(mainTab==="mentenanta"||mainTab==="pw56")&&<>
