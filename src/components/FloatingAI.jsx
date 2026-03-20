@@ -1,6 +1,6 @@
 // src/components/FloatingAI.jsx — Floating AI chat with voice conversation mode
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Zap, Camera, Eye, X, Mic, Volume2, VolumeX } from "lucide-react";
+import { Zap, Camera, Eye, X, Mic, Volume2, VolumeX, Globe } from "lucide-react";
 import { isAIEnabled, getActiveProvider, chatInline } from "../lib/ai";
 import { buildKnowledgeContext, buildHistoryContext, searchKnowledge, loadKnowledgeBaseSync } from "../lib/knowledgeBase";
 
@@ -264,7 +264,7 @@ export default function FloatingAI({ T, sectionContext = "", dailyLog = [] }) {
             {voiceMode ? (
               <>Modul vocal e activ.<br/>Vorbiți și AI-ul va răspunde verbal.<br/>Conversația continuă automat.</>
             ) : (
-              <>Întreabă orice despre mentenanță.<br/>Poți trimite poze sau dicta vocal.</>
+              <>Întreabă orice despre mentenanță.<br/>Poți trimite poze sau dicta vocal.<br/><span style={{fontSize:11}}>🌐 Caută automat pe internet când e nevoie</span></>
             )}
             {sectionContext && <div style={{ marginTop: 10, padding: "6px 12px", background: T.accentLight, borderRadius: 6, fontSize: 12, color: T.accent, display: "inline-block" }}>📍 {sectionContext}</div>}
           </div>
@@ -332,7 +332,7 @@ export default function FloatingAI({ T, sectionContext = "", dailyLog = [] }) {
         <input ref={galRef} type="file" accept="image/*" onChange={e => { handleImage(e.target.files); e.target.value = ""; }} style={{ display: "none" }} />
         <textarea value={input} onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-          placeholder={voiceMode ? "Sau scrieți..." : "Întrebați ceva..."} rows={1}
+          placeholder={voiceMode ? "Sau scrieți..." : "Întrebați... (🌐 caută automat pe web)"} rows={1}
           style={{
             flex: 1, fontSize: 14, padding: "8px 12px", border: `1px solid ${T.border}`,
             borderRadius: 10, background: T.surface, color: T.text, fontFamily: "inherit",

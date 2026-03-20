@@ -1,4 +1,4 @@
-// src/lib/ai.js — Multi-API: Claude (Anthropic) + Gemini (Google)
+// src/lib/ai.js — Multi-API: Claude + Gemini, with web search
 
 const CLAUDE_URL = "https://api.anthropic.com/v1/messages";
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
@@ -14,11 +14,14 @@ export function getActiveProvider() {
 }
 
 // ─── CLAUDE API ───
-async function callClaude(messages, { maxTokens = 2000, system } = {}) {
+async function callClaude(messages, { maxTokens = 2000, system, webSearch = false } = {}) {
   const key = getClaudeKey();
   if (!key) throw new Error("Claude API key lipsă");
   const body = { model: "claude-sonnet-4-20250514", max_tokens: maxTokens, messages };
   if (system) body.system = system;
+  if (webSearch) {
+    body.tools = [{ type: "web_search_20250305", name: "web_search", max_uses: 3 }];
+  }
   const res = await fetch(CLAUDE_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
@@ -26,11 +29,13 @@ async function callClaude(messages, { maxTokens = 2000, system } = {}) {
   });
   if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `Claude error: ${res.status}`); }
   const data = await res.json();
-  return data.content?.[0]?.text || "";
+  // Extract text from potentially mixed content blocks (text + search results)
+  const textParts = (data.content || []).filter(b => b.type === "text").map(b => b.text);
+  return textParts.join("\n") || "";
 }
 
 // ─── GEMINI API ───
-async function callGemini(prompt, { imageData, system, maxTokens = 2000 } = {}) {
+async function callGemini(prompt, { imageData, system, maxTokens = 2000, webSearch = false } = {}) {
   const key = getGeminiKey();
   if (!key) throw new Error("Gemini API key lipsă");
   const model = "gemini-2.5-flash";
@@ -44,35 +49,61 @@ async function callGemini(prompt, { imageData, system, maxTokens = 2000 } = {}) 
   }
   parts.push({ text: prompt });
 
+  const body = {
+    contents: [{ parts }],
+    generationConfig: { maxOutputTokens: maxTokens, temperature: 0.3 }
+  };
+
+  // Add Google Search grounding tool
+  if (webSearch) {
+    body.tools = [{ google_search: {} }];
+  }
+
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts }],
-      generationConfig: { maxOutputTokens: maxTokens, temperature: 0.3 }
-    })
+    body: JSON.stringify(body)
   });
   if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `Gemini error: ${res.status}`); }
   const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  
+  // Extract text from all parts (Gemini may return multiple parts with grounding)
+  const candidate = data.candidates?.[0]?.content?.parts || [];
+  const textParts = candidate.filter(p => p.text).map(p => p.text);
+  
+  // Add grounding sources if available
+  const grounding = data.candidates?.[0]?.groundingMetadata;
+  let result = textParts.join("\n");
+  if (grounding?.groundingChunks?.length > 0) {
+    result += "\n\n📎 Surse web:";
+    const seen = new Set();
+    grounding.groundingChunks.forEach(chunk => {
+      const uri = chunk.web?.uri;
+      const title = chunk.web?.title;
+      if (uri && !seen.has(uri)) {
+        seen.add(uri);
+        result += `\n• ${title || uri}`;
+      }
+    });
+  }
+  return result;
 }
 
 // ─── UNIFIED CALL ───
-async function callAI(prompt, { imageData, system, maxTokens = 2000 } = {}) {
+async function callAI(prompt, { imageData, system, maxTokens = 2000, webSearch = false } = {}) {
   const provider = getActiveProvider();
   if (!provider) throw new Error("Niciun API key configurat. Adăugați VITE_GEMINI_API_KEY sau VITE_ANTHROPIC_API_KEY în .env");
   
   if (provider === "gemini") {
-    return await callGemini(prompt, { imageData, system, maxTokens });
+    return await callGemini(prompt, { imageData, system, maxTokens, webSearch });
   } else {
-    // Claude needs structured messages
     const content = [];
     if (imageData) {
       const match = imageData.match(/^data:(image\/\w+);base64,(.+)$/);
       if (match) content.push({ type: "image", source: { type: "base64", media_type: match[1], data: match[2] } });
     }
     content.push({ type: "text", text: prompt });
-    return await callClaude([{ role: "user", content }], { system, maxTokens });
+    return await callClaude([{ role: "user", content }], { system, maxTokens, webSearch });
   }
 }
 
@@ -127,19 +158,24 @@ export async function getSuggestions(context = "", situation = "") {
 
 export async function askQuestion(question, context = "", imageData = null) {
   return await callAI(question, {
-    imageData,
-    system: "Ești expert mentenanță turbine eoliene Senvion MM92 și PowerWind PW56. Răspunzi concis, practic, în română. Folosești informațiile din istoric și manuale." + (context ? "\n\n" + context : ""),
+    imageData, webSearch: true,
+    system: "Ești expert mentenanță turbine eoliene Senvion MM92 și PowerWind PW56. Răspunzi concis, practic, în română. Folosești informațiile din istoric și manuale. Dacă nu găsești răspunsul în manuale, caută pe internet." + (context ? "\n\n" + context : ""),
     maxTokens: 3000
   });
 }
 
-// ─── INLINE CHAT (context-aware) ───
+// ─── INLINE CHAT (context-aware, with web search) ───
 export async function chatInline(message, sectionContext = "", knowledgeContext = "", imageData = null) {
+  // Detect if user is asking something that likely needs web search
+  const needsWeb = /caut[aă]|găse[sș]te|internet|online|link|preț|pret|part.?number|specificați[ei]|catalog|furnizor|producător|manual online|actualizare|update|noutăți|nou[aă]|recent|ultim/i.test(message);
+  
   const system = `Ești asistentul AI integrat pentru mentenanța turbinelor eoliene (Senvion MM92 / PowerWind PW56).
 Tehnicianul se află pe secțiunea: ${sectionContext || "generală"}.
 Răspunzi concis și practic, în limba română. Când e relevant, citezi din manuale.
 Dacă primești o imagine, o analizezi în context tehnic.
+${needsWeb ? "Ai acces la internet. Caută informații actuale când e relevant (part numbers, specificații, proceduri noi)." : ""}
+Dacă nu ai răspunsul în manualele încărcate, spune clar și oferă-te să cauți pe internet.
 ${knowledgeContext}`;
 
-  return await callAI(message, { imageData, system, maxTokens: 2000 });
+  return await callAI(message, { imageData, system, maxTokens: 2000, webSearch: needsWeb });
 }
