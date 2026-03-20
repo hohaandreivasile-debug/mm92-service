@@ -2,6 +2,7 @@
 import { useState, useRef } from "react";
 import { Camera, Eye, CalendarDays } from "lucide-react";
 import { getAllTurbines } from "../data/fleet";
+import ReadAloud from "./ReadAloud";
 
 const SpeechRec = typeof window !== "undefined" && (window.SpeechRecognition || window.webkitSpeechRecognition);
 const ALL_TURBINES = getAllTurbines();
@@ -289,6 +290,7 @@ export default function DailyLog({ T, dailyLog, setDailyLog }) {
         {active.priority === "urgent" && <span style={{ padding: "4px 10px", borderRadius: 6, background: T.nokBg, color: T.nok, fontWeight: 700, fontSize: 12 }}>URGENT</span>}
         <span style={{ flex: 1 }} />
         <button onClick={() => genIntPDF(active, T)} style={{ padding: "8px 14px", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700, fontSize: 12, minHeight: 38 }}>PDF</button>
+        <ReadAloud text={shareText(active)} T={T} label="Citește" />
         <button onClick={() => shareEmail(active)} title="Trimite pe email" style={{ padding: "8px 12px", border: `1px solid ${T.border}`, borderRadius: 8, background: T.surface, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: T.text, minHeight: 38 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
           Email

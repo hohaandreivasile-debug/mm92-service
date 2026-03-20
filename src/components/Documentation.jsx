@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { FileText, BookOpen } from "lucide-react";
 import { loadKnowledgeBase, addDocument, removeDocument } from "../lib/knowledgeBase";
 import { supabase, isOnline } from "../lib/supabase";
+import ReadAloud from "./ReadAloud";
 
 export default function Documentation({ T }) {
   const [kb, setKb] = useState([]);
@@ -78,6 +79,7 @@ export default function Documentation({ T }) {
           <div style={{ fontSize: 16, fontWeight: 700, color: T.text }}>{previewDoc.name}</div>
           <div style={{ fontSize: 12, color: T.textMuted }}>{previewDoc.pages} pagini • {(previewDoc.textLength / 1000).toFixed(0)}k caractere</div>
         </div>
+        <ReadAloud text={previewDoc.text} T={T} label="Citește documentul" />
       </div>
       <div style={{ marginBottom: 12 }}>
         <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}

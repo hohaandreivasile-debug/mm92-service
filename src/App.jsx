@@ -7,6 +7,8 @@ import { generateAlerts } from "./lib/alerts";
 import { playTabSwitch, playSectionSelect, playCheck, playWelcome, playSuccess, isSoundsEnabled, setSoundsEnabled } from "./lib/sounds";
 
 const AIAssistantLazy = lazy(() => import("./components/AIAssistant"));
+const ReadAloudLazy = lazy(() => import("./components/ReadAloud"));
+function ReadAloudBtn({text,T,label,size}){return <Suspense fallback={null}><ReadAloudLazy text={text} T={T} label={label} size={size}/></Suspense>}
 function AIAssistantView({T,dailyLog}){
   return <Suspense fallback={<div style={{padding:20,color:T.textMuted}}>Se încarcă...</div>}><AIAssistantLazy T={T} dailyLog={dailyLog}/></Suspense>;
 }
@@ -1312,6 +1314,17 @@ input,select,textarea,button{font-family:inherit}
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.accent} strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>}
           </div>
+          {sec?.items?.length>0&&<ReadAloudBtn T={T} size="small" label="Citește" text={
+            getName(sec)+". "+sec.items.map(item=>{
+              const d=pCd[item.id]||{};
+              let t=`${item.id}: ${getItemName(item)}`;
+              if(item.note) t+=`. ${item.note}`;
+              if(d.ok) t+=". Verificat OK";
+              if(d.obs) t+=`. Observații: ${d.obs}`;
+              if(d.value) t+=`. Valoare: ${d.value}`;
+              return t;
+            }).join(". ")
+          }/>}
           {sec&&<ProcedureBadge sectionId={sec.id} procedures={pProcedures} T={T}/>}
           {sec&&(()=>{const p=gp(sec,pCd);if(!p)return null;const pc=Math.round(p.c/p.t*100);
             return(<div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:10}}>
