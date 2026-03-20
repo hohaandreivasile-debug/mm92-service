@@ -19,6 +19,11 @@ function DocumentationView({T}){
   return <Suspense fallback={<div style={{padding:20,color:T.textMuted}}>Se încarcă...</div>}><DocumentationLazy T={T}/></Suspense>;
 }
 
+const VisualGalleryLazy = lazy(() => import("./components/VisualGallery"));
+function VisualGalleryView({T}){
+  return <Suspense fallback={<div style={{padding:20,color:T.textMuted}}>Se încarcă...</div>}><VisualGalleryLazy T={T}/></Suspense>;
+}
+
 const DailyLogLazy = lazy(() => import("./components/DailyLog"));
 function DailyLogView({T,dailyLog,setDailyLog}){
   return <Suspense fallback={<div style={{padding:20,color:T.textMuted}}>Se încarcă...</div>}><DailyLogLazy T={T} dailyLog={dailyLog} setDailyLog={setDailyLog}/></Suspense>;
@@ -130,53 +135,53 @@ function SectionIcon({id, size=16, color="currentColor"}) {
 }
 
 const THEMES = {
-  light: { name:"Light", label:"☀️ Luminos",
-    bg:"#f0f4f8",surface:"#ffffff",surfaceAlt:"#f8fafc",sidebar:"#0c1929",
-    sidebarHover:"#162d50",sidebarActive:"#1e3a5f",sidebarText:"#94a3b8",
-    sidebarActiveText:"#93c5fd",text:"#0f172a",textSec:"#475569",textMuted:"#94a3b8",
-    border:"#e2e8f0",borderLight:"#f1f5f9",accent:"#2563eb",accentLight:"#dbeafe",
-    ok:"#16a34a",okBg:"#dcfce7",nok:"#dc2626",nokBg:"#fee2e2",
-    warn:"#d97706",warnBg:"#fff7ed",cardShadow:"0 1px 4px rgba(0,0,0,0.06)"
+  industrial: { name:"Industrial", label:"⚙️ Industrial",
+    bg:"#0f1419",surface:"#1a2028",surfaceAlt:"#212a34",sidebar:"#0a0f14",
+    sidebarHover:"#151d26",sidebarActive:"#1c2a38",sidebarText:"#6b7f95",
+    sidebarActiveText:"#4fc3f7",text:"#e8edf2",textSec:"#9aabb8",textMuted:"#566573",
+    border:"#2a3744",borderLight:"#212a34",accent:"#4fc3f7",accentLight:"#0d2a3d",
+    ok:"#66bb6a",okBg:"#1b2e1b",nok:"#ef5350",nokBg:"#2e1515",
+    warn:"#ffa726",warnBg:"#2e2210",cardShadow:"0 2px 12px rgba(0,0,0,0.4)"
   },
-  dark: { name:"Dark", label:"🌙 Întuneric",
-    bg:"#0b1120",surface:"#141e33",surfaceAlt:"#1a2740",sidebar:"#070d1a",
-    sidebarHover:"#162d50",sidebarActive:"#1e3a5f",sidebarText:"#64748b",
-    sidebarActiveText:"#60a5fa",text:"#e2e8f0",textSec:"#94a3b8",textMuted:"#475569",
-    border:"#1e293b",borderLight:"#1a2740",accent:"#3b82f6",accentLight:"#1e3a5f",
-    ok:"#22c55e",okBg:"#14532d",nok:"#ef4444",nokBg:"#450a0a",
-    warn:"#f59e0b",warnBg:"#451a03",cardShadow:"0 1px 4px rgba(0,0,0,0.3)"
+  arctic: { name:"Arctic", label:"❄️ Arctic",
+    bg:"#f4f7fa",surface:"#ffffff",surfaceAlt:"#f0f4f8",sidebar:"#1b2838",
+    sidebarHover:"#243447",sidebarActive:"#2d4156",sidebarText:"#8899aa",
+    sidebarActiveText:"#64b5f6",text:"#1a2535",textSec:"#546578",textMuted:"#8899aa",
+    border:"#dce4ec",borderLight:"#edf2f7",accent:"#1976d2",accentLight:"#e3f0fc",
+    ok:"#2e7d32",okBg:"#e8f5e9",nok:"#c62828",nokBg:"#ffebee",
+    warn:"#ef6c00",warnBg:"#fff3e0",cardShadow:"0 1px 8px rgba(25,50,80,0.08)"
   },
-  highContrast: { name:"High Contrast", label:"🔆 Contrast ridicat",
+  midnight: { name:"Midnight", label:"🌑 Midnight",
+    bg:"#0a0a12",surface:"#12121e",surfaceAlt:"#1a1a2a",sidebar:"#06060e",
+    sidebarHover:"#14142a",sidebarActive:"#1e1e3a",sidebarText:"#5a5a8a",
+    sidebarActiveText:"#9c8cff",text:"#e0e0f0",textSec:"#9090b0",textMuted:"#505070",
+    border:"#2a2a40",borderLight:"#1e1e30",accent:"#7c6cf7",accentLight:"#1e1a3a",
+    ok:"#4caf50",okBg:"#1a2e1a",nok:"#ff5252",nokBg:"#2e1414",
+    warn:"#ffab40",warnBg:"#2e2414",cardShadow:"0 2px 16px rgba(0,0,0,0.5)"
+  },
+  turbine: { name:"Turbine", label:"🌊 Turbine",
+    bg:"#091a2a",surface:"#0e2438",surfaceAlt:"#132e45",sidebar:"#05101c",
+    sidebarHover:"#0e2438",sidebarActive:"#163550",sidebarText:"#4a7a9f",
+    sidebarActiveText:"#4dd0e1",text:"#d0e8f5",textSec:"#7ab0cc",textMuted:"#3d6a85",
+    border:"#1a3d5a",borderLight:"#132e45",accent:"#00acc1",accentLight:"#0a2a35",
+    ok:"#66bb6a",okBg:"#0a2a14",nok:"#ef5350",nokBg:"#2a1010",
+    warn:"#ffb74d",warnBg:"#2a2010",cardShadow:"0 2px 12px rgba(0,40,80,0.35)"
+  },
+  field: { name:"Field", label:"🌿 Teren",
+    bg:"#f2f7f2",surface:"#ffffff",surfaceAlt:"#f5faf5",sidebar:"#182418",
+    sidebarHover:"#223022",sidebarActive:"#2c4a2c",sidebarText:"#6a8a6a",
+    sidebarActiveText:"#81c784",text:"#1a2e1a",textSec:"#3d5a3d",textMuted:"#6a8a6a",
+    border:"#c0d8c0",borderLight:"#ddf0dd",accent:"#388e3c",accentLight:"#c8e6c9",
+    ok:"#2e7d32",okBg:"#e8f5e9",nok:"#c62828",nokBg:"#ffebee",
+    warn:"#e65100",warnBg:"#fff3e0",cardShadow:"0 1px 6px rgba(0,40,0,0.08)"
+  },
+  highContrast: { name:"High Contrast", label:"🔆 Contrast",
     bg:"#000000",surface:"#0a0a0a",surfaceAlt:"#141414",sidebar:"#000000",
     sidebarHover:"#1a1a1a",sidebarActive:"#222222",sidebarText:"#aaaaaa",
     sidebarActiveText:"#ffffff",text:"#ffffff",textSec:"#cccccc",textMuted:"#888888",
     border:"#444444",borderLight:"#222222",accent:"#00aaff",accentLight:"#002244",
     ok:"#00ff66",okBg:"#003311",nok:"#ff3333",nokBg:"#330000",
     warn:"#ffcc00",warnBg:"#332200",cardShadow:"0 1px 4px rgba(255,255,255,0.05)"
-  },
-  nacelle: { name:"Nacelle", label:"🌊 Nacelă (albastru)",
-    bg:"#0a1628",surface:"#0f1f38",surfaceAlt:"#132848",sidebar:"#060e1e",
-    sidebarHover:"#0f1f38",sidebarActive:"#162d50",sidebarText:"#5a7da8",
-    sidebarActiveText:"#7db8f0",text:"#d0e4f7",textSec:"#8bacc8",textMuted:"#4a6f8f",
-    border:"#1a3352",borderLight:"#132848",accent:"#4a9eff",accentLight:"#1a3a66",
-    ok:"#4ade80",okBg:"#0a2818",nok:"#f87171",nokBg:"#2a0f0f",
-    warn:"#fbbf24",warnBg:"#2a1f0a",cardShadow:"0 1px 6px rgba(0,50,100,0.3)"
-  },
-  field: { name:"Field", label:"🌿 Teren (verde)",
-    bg:"#f0f7f0",surface:"#ffffff",surfaceAlt:"#f5faf5",sidebar:"#1a2e1a",
-    sidebarHover:"#243524",sidebarActive:"#2d4a2d",sidebarText:"#7a9a7a",
-    sidebarActiveText:"#a0d8a0",text:"#1a2e1a",textSec:"#3d5a3d",textMuted:"#7a9a7a",
-    border:"#c8dcc8",borderLight:"#e0f0e0",accent:"#2d8a2d",accentLight:"#d0f0d0",
-    ok:"#16a34a",okBg:"#dcfce7",nok:"#dc2626",nokBg:"#fee2e2",
-    warn:"#b45309",warnBg:"#fef3c7",cardShadow:"0 1px 4px rgba(0,50,0,0.08)"
-  },
-  sunset: { name:"Sunset", label:"🌅 Apus (cald)",
-    bg:"#1c1017",surface:"#281a22",surfaceAlt:"#32202c",sidebar:"#140a10",
-    sidebarHover:"#281a22",sidebarActive:"#3d2233",sidebarText:"#8a6a7a",
-    sidebarActiveText:"#f0a0c0",text:"#f0dce4",textSec:"#c8a0b4",textMuted:"#7a5a6a",
-    border:"#3d2233",borderLight:"#32202c",accent:"#e06090",accentLight:"#3d1828",
-    ok:"#4ade80",okBg:"#1a2e18",nok:"#f87171",nokBg:"#2e1010",
-    warn:"#fbbf24",warnBg:"#2e2010",cardShadow:"0 1px 6px rgba(100,0,50,0.3)"
   }
 };
 const THEME_KEYS = Object.keys(THEMES);
@@ -822,7 +827,7 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
   const online = !!isOnlineMode && !!session;
 
   // Always call hooks (React rules). Use session data when online, local data when offline.
-  const[_themeId,_setThemeId]=useState(()=>loadState("themeId","light"));
+  const[_themeId,_setThemeId]=useState(()=>loadState("themeId","industrial"));
   const[as,setAs]=useState("report");
   const[_cd,_setCd]=useState(()=>loadState("cd",{}));
   const[_rp,_setRp]=useState(()=>loadState("rp",{parc:"",serie:""}));
@@ -1122,30 +1127,39 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
     {id:"ai",label:"AI",labelFull:"Asistent AI",icon:"🤖"}
   ];
 
-  return(<div style={{display:"flex",flexDirection:"column",height:"100vh",fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif",background:T.bg,color:T.text}}>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  return(<div style={{display:"flex",flexDirection:"column",height:"100vh",fontFamily:"'IBM Plex Sans','Segoe UI',system-ui,sans-serif",background:T.bg,color:T.text}}>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
     <style>{`@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.7;transform:scale(1.1)}}
+*{box-sizing:border-box;scrollbar-width:thin;scrollbar-color:${T.border} transparent}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:${T.border};border-radius:3px}
+input,select,textarea,button{font-family:inherit}
 @media(max-width:768px){.topbar-logo{display:none!important}.topbar-user{display:none!important}.topbar-label-full{display:none!important}.topbar-label-short{display:inline!important}.mm92-sidebar{width:52px!important}.mm92-sidebar .sb-text{display:none!important}}
 @media(min-width:769px){.topbar-label-short{display:none!important}.topbar-label-full{display:inline!important}}`}</style>
 
     {/* ─── TOP TAB BAR ─── */}
-    <div style={{display:"flex",alignItems:"center",background:T.sidebar,borderBottom:`1px solid ${T.border}`,padding:"0 4px",minHeight:48,flexShrink:0,gap:0,overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
-      <div className="topbar-logo" style={{display:"flex",alignItems:"center",gap:6,marginRight:8,paddingLeft:6,flexShrink:0}}>
-        <TurbineIcon size={18} color={T.accent}/>
-        <span style={{fontSize:12,fontWeight:800,color:T.accent,whiteSpace:"nowrap"}}>BLUE LINE</span>
+    <div style={{display:"flex",alignItems:"center",background:T.sidebar,padding:"0 6px",minHeight:52,flexShrink:0,gap:0,overflowX:"auto",WebkitOverflowScrolling:"touch",borderBottom:`1px solid ${T.border}`,backdropFilter:"blur(12px)"}}>
+      <div className="topbar-logo" style={{display:"flex",alignItems:"center",gap:8,marginRight:12,paddingLeft:8,flexShrink:0}}>
+        <div style={{width:32,height:32,borderRadius:8,background:`linear-gradient(135deg,${T.accent},${T.ok})`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <TurbineIcon size={18} color="#fff"/>
+        </div>
+        <div style={{display:"flex",flexDirection:"column"}}>
+          <span style={{fontSize:13,fontWeight:700,color:"#fff",letterSpacing:"0.5px"}}>BLUE LINE</span>
+          <span style={{fontSize:9,color:T.sidebarText,letterSpacing:"1px",textTransform:"uppercase"}}>Energy Service</span>
+        </div>
       </div>
       {MAIN_TABS.map(t=>(<button key={t.id} onClick={()=>{setMainTab(t.id);if(t.id==="mentenanta")setAs("report");if(t.id==="pw56")setAs("pw_report")}} style={{
-        padding:"8px 12px",border:"none",borderBottom:mainTab===t.id?`3px solid ${T.accent}`:"3px solid transparent",
-        background:mainTab===t.id?T.sidebarActive:"transparent",color:mainTab===t.id?T.sidebarActiveText:T.sidebarText,
-        cursor:"pointer",fontSize:12,fontWeight:mainTab===t.id?700:500,display:"flex",alignItems:"center",gap:4,
-        whiteSpace:"nowrap",minHeight:48,transition:"all 0.15s",flexShrink:0
-      }}><span>{t.icon}</span><span className="topbar-label-full">{t.labelFull}</span><span className="topbar-label-short">{t.label}</span>
-        {t.id==="interventii"&&dailyLog.length>0&&<span style={{fontSize:9,fontWeight:700,background:T.accent,color:"#fff",padding:"1px 5px",borderRadius:8}}>{dailyLog.length}</span>}
+        padding:"10px 14px",border:"none",borderBottom:mainTab===t.id?`2px solid ${T.accent}`:"2px solid transparent",
+        background:mainTab===t.id?`${T.accent}15`:"transparent",color:mainTab===t.id?T.accent:T.sidebarText,
+        cursor:"pointer",fontSize:12,fontWeight:mainTab===t.id?600:400,display:"flex",alignItems:"center",gap:5,
+        whiteSpace:"nowrap",minHeight:52,transition:"all 0.2s",flexShrink:0,letterSpacing:"0.2px"
+      }}><span style={{fontSize:15}}>{t.icon}</span><span className="topbar-label-full">{t.labelFull}</span><span className="topbar-label-short">{t.label}</span>
+        {t.id==="interventii"&&dailyLog.length>0&&<span style={{fontSize:9,fontWeight:600,background:T.accent,color:"#fff",padding:"2px 6px",borderRadius:10,minWidth:16,textAlign:"center"}}>{dailyLog.length}</span>}
       </button>))}
       <div style={{flex:1}}/>
-      <div className="topbar-user" style={{fontSize:11,color:T.sidebarText,paddingRight:6,flexShrink:0}}>
-        {online&&(profile?.full_name||user?.email)}
-        {online&&signOut&&<button onClick={signOut} style={{marginLeft:6,fontSize:10,padding:"2px 6px",background:T.nokBg,color:T.nok,border:"none",borderRadius:4,cursor:"pointer"}}>Ieșire</button>}
+      <div className="topbar-user" style={{fontSize:11,color:T.sidebarText,paddingRight:8,flexShrink:0,display:"flex",alignItems:"center",gap:8}}>
+        {online&&<div style={{width:6,height:6,borderRadius:"50%",background:T.ok,flexShrink:0}}/>}
+        <span>{online&&(profile?.full_name||user?.email)}</span>
+        {online&&signOut&&<button onClick={signOut} style={{fontSize:10,padding:"4px 10px",background:`${T.nok}22`,color:T.nok,border:`1px solid ${T.nok}33`,borderRadius:6,cursor:"pointer",fontWeight:600}}>Ieșire</button>}
       </div>
     </div>
 
@@ -1398,8 +1412,20 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
 
     {/* ─── TAB: DOCUMENTAȚIE ─── */}
     {mainTab==="documentatie"&&<div style={{flex:1,overflowY:"auto",padding:"16px 20px"}}>
-      <div style={{maxWidth:900,margin:"0 auto",background:T.surface,borderRadius:10,padding:"20px 24px",boxShadow:T.cardShadow}}>
-        <DocumentationView T={T}/>
+      <div style={{maxWidth:900,margin:"0 auto"}}>
+        {/* Sub-tabs */}
+        <div style={{display:"flex",gap:6,marginBottom:14}}>
+          {[["docs","📖 Manuale PDF"],["gallery","📷 Referințe Vizuale"]].map(([id,lbl])=>(
+            <button key={id} onClick={()=>setAs(id)} style={{
+              flex:1,padding:"10px 14px",border:as===id?`2px solid ${T.accent}`:`1px solid ${T.border}`,
+              background:as===id?`${T.accent}12`:T.surface,color:as===id?T.accent:T.text,
+              borderRadius:10,cursor:"pointer",fontWeight:600,fontSize:13
+            }}>{lbl}</button>
+          ))}
+        </div>
+        <div style={{background:T.surface,borderRadius:10,padding:"20px 24px",boxShadow:T.cardShadow}}>
+          {as!=="gallery"?<DocumentationView T={T}/>:<VisualGalleryView T={T}/>}
+        </div>
       </div>
     </div>}
 

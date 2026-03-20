@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Zap, Camera, Eye, X, Mic, Volume2, VolumeX, Globe } from "lucide-react";
 import { isAIEnabled, getActiveProvider, chatInline } from "../lib/ai";
 import { buildKnowledgeContext, buildHistoryContext, searchKnowledge, loadKnowledgeBaseSync } from "../lib/knowledgeBase";
+import { buildVisualContext } from "./VisualGallery";
 
 const SpeechRec = typeof window !== "undefined" && (window.SpeechRecognition || window.webkitSpeechRecognition);
 const synth = typeof window !== "undefined" ? window.speechSynthesis : null;
@@ -40,6 +41,7 @@ export default function FloatingAI({ T, sectionContext = "", dailyLog = [] }) {
     let ctx = buildHistoryContext(dailyLog, 30);
     if (query) ctx += searchKnowledge(query, 3, 2000);
     else ctx += buildKnowledgeContext(40000);
+    ctx += buildVisualContext();
     return ctx;
   };
 
