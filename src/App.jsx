@@ -4,6 +4,7 @@ import { SECTIONS_PW56 } from "./data/sectionsPW56";
 import { FLEET, getAllTurbines, getParks } from "./data/fleet";
 import { syncMM92, syncPW56, syncDailyLog, syncHistoryMM92, syncHistoryPW56, syncCustomNames, loadAllFromCloud, onSyncStatusChange, KEYS } from "./lib/cloudSync";
 import { generateAlerts } from "./lib/alerts";
+import { playTabSwitch, playSectionSelect, playCheck, playWelcome, playSuccess, isSoundsEnabled, setSoundsEnabled } from "./lib/sounds";
 
 const AIAssistantLazy = lazy(() => import("./components/AIAssistant"));
 function AIAssistantView({T,dailyLog}){
@@ -414,7 +415,7 @@ function CheckItem({item,data,onChange,depth=0,T,itemPhotos,onAddPhoto,onRemoveP
     <div style={{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 14px",
       background:v.ok?T.okBg:v.ok===false?T.nokBg:(depth===0?T.surfaceAlt:T.surface),
       borderLeft:`4px solid ${v.ok?T.ok:v.ok===false?T.nok:(IC[item.interval]||T.border)}`,borderRadius:6}}>
-      <input type="checkbox" checked={v.ok||false} onChange={e=>u("ok",e.target.checked)}
+      <input type="checkbox" checked={v.ok||false} onChange={e=>{u("ok",e.target.checked);e.target.checked?playCheck():null}}
         style={{marginTop:2,accentColor:T.accent,width:22,height:22,flexShrink:0,cursor:"pointer"}}/>
       <div style={{flex:1,minWidth:0}}>
         <div style={{display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
@@ -860,7 +861,10 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
 
   const[so,setSo]=useState(true);
   const[lastSaved,setLastSaved]=useState(null);
-  const[cloudSync,setCloudSync]=useState(""); // sync status display
+  const[cloudSync,setCloudSync]=useState("");
+  const[soundOn,setSoundOn]=useState(()=>{try{return localStorage.getItem("mm92_sound")!=="off"}catch{return true}});
+  const toggleSound=()=>{const next=!soundOn;setSoundOn(next);setSoundsEnabled(next);try{localStorage.setItem("mm92_sound",next?"on":"off")}catch{}};
+  useEffect(()=>{setSoundsEnabled(soundOn)},[soundOn]); // sync status display
   const loadFileRef=useRef(null);
 
   // ─── CLOUD LOAD ON MOUNT ───
@@ -1148,7 +1152,7 @@ input,select,textarea,button{font-family:inherit}
       <div className="topbar-logo" onClick={()=>setMainTab("home")} style={{display:"flex",alignItems:"center",gap:8,marginRight:12,paddingLeft:8,flexShrink:0,cursor:"pointer"}}>
         <img src="/logo.png" alt="Blue Line Energy" style={{height:28}}/>
       </div>
-      {MAIN_TABS.map(t=>(<button key={t.id} onClick={()=>{setMainTab(t.id);if(t.id==="mentenanta")setAs("report");if(t.id==="pw56")setAs("pw_report")}} style={{
+      {MAIN_TABS.map(t=>(<button key={t.id} onClick={()=>{playTabSwitch();setMainTab(t.id);if(t.id==="mentenanta")setAs("report");if(t.id==="pw56")setAs("pw_report");if(t.id==="home")playWelcome()}} style={{
         padding:"10px 14px",border:"none",borderBottom:mainTab===t.id?`2px solid ${T.accent}`:"2px solid transparent",
         background:mainTab===t.id?`${T.accent}15`:"transparent",color:mainTab===t.id?T.accent:T.sidebarText,
         cursor:"pointer",fontSize:12,fontWeight:mainTab===t.id?600:400,display:"flex",alignItems:"center",gap:5,
@@ -1157,6 +1161,12 @@ input,select,textarea,button{font-family:inherit}
         {t.id==="interventii"&&dailyLog.length>0&&<span style={{fontSize:9,fontWeight:600,background:T.accent,color:"#fff",padding:"2px 6px",borderRadius:10,minWidth:16,textAlign:"center"}}>{dailyLog.length}</span>}
       </button>))}
       <div style={{flex:1}}/>
+      <button onClick={toggleSound} title={soundOn?"Dezactivare sunete":"Activare sunete"} style={{width:32,height:32,borderRadius:6,border:"none",background:soundOn?"rgba(255,255,255,0.1)":"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,opacity:soundOn?0.8:0.3}}>
+        {soundOn
+          ?<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.sidebarText} strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          :<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.sidebarText} strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+        }
+      </button>
       <div className="topbar-user" style={{fontSize:11,color:T.sidebarText,paddingRight:8,flexShrink:0,display:"flex",alignItems:"center",gap:8}}>
         {online&&<div style={{width:6,height:6,borderRadius:"50%",background:T.ok,flexShrink:0}}/>}
         <span>{online&&(profile?.full_name||user?.email)}</span>
@@ -1194,7 +1204,7 @@ input,select,textarea,button{font-family:inherit}
       </div>
       {so&&<div style={{padding:"4px 0",flex:1}}>{activeSections.map(s=>{const p=gp(s,pCd);const act=as===s.id;
         return(<div key={s.id} style={{display:"flex",alignItems:"center",gap:0}}>
-        <button onClick={()=>setAs(s.id)} style={{flex:1,display:"flex",alignItems:"center",gap:8,padding:"9px 12px",border:"none",textAlign:"left",background:act?T.sidebarActive:"transparent",color:act?T.sidebarActiveText:T.sidebarText,cursor:"pointer",fontSize:13,fontWeight:act?700:400,borderLeft:act?`3px solid ${T.accent}`:"3px solid transparent",minHeight:40,minWidth:0}}>
+        <button onClick={()=>{playSectionSelect();setAs(s.id)}} style={{flex:1,display:"flex",alignItems:"center",gap:8,padding:"9px 12px",border:"none",textAlign:"left",background:act?T.sidebarActive:"transparent",color:act?T.sidebarActiveText:T.sidebarText,cursor:"pointer",fontSize:13,fontWeight:act?700:400,borderLeft:act?`3px solid ${T.accent}`:"3px solid transparent",minHeight:40,minWidth:0}}>
           <span style={{width:22,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><SectionIcon id={s.id} size={16} color={act?T.sidebarActiveText:T.sidebarText}/></span>
           <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{getName(s)}</span>
           {p&&<span style={{fontSize:10,fontWeight:700,color:p.c===p.t&&p.t>0?T.ok:T.sidebarText}}>{p.c}/{p.t}</span>}
