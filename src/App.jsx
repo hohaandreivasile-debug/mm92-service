@@ -34,8 +34,8 @@ function WelcomeView({T,onNavigate,stats,alerts}){
 }
 
 const DailyLogLazy = lazy(() => import("./components/DailyLog"));
-function DailyLogView({T,dailyLog,setDailyLog}){
-  return <Suspense fallback={<div style={{padding:20,color:T.textMuted}}>Se încarcă...</div>}><DailyLogLazy T={T} dailyLog={dailyLog} setDailyLog={setDailyLog}/></Suspense>;
+function DailyLogView({T,dailyLog,setDailyLog,onCloudSave}){
+  return <Suspense fallback={<div style={{padding:20,color:T.textMuted}}>Se încarcă...</div>}><DailyLogLazy T={T} dailyLog={dailyLog} setDailyLog={setDailyLog} onCloudSave={onCloudSave}/></Suspense>;
 }
 
 /* ─── CUSTOM SVG ICONS ─── */
@@ -1036,6 +1036,16 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
     return()=>clearTimeout(timer);
   },[pwCd,pwRp,pwIss,pwBd,pwSg,pwPhotos,pwItemPhotos,pwProcedures]);
 
+  // Always sync dailyLog to cloud (separate from main auto-save which skips in online mode)
+  useEffect(()=>{
+    try{localStorage.setItem("mm92_service_data",JSON.stringify({themeId:_themeId,cd:_cd,rp:_rp,iss:_iss,bd:_bd,id:_id,sg:_sg,photos:_photos,itemPhotos:_itemPhotos,procedures:_procedures,dailyLog:_dailyLog}))}catch{}
+    const timer=setTimeout(()=>{
+      syncDailyLog(_dailyLog);
+      syncMM92({themeId:_themeId,cd:_cd,rp:_rp,iss:_iss,bd:_bd,id:_id,sg:_sg,photos:_photos,itemPhotos:_itemPhotos,procedures:_procedures,dailyLog:_dailyLog});
+    },1000);
+    return()=>clearTimeout(timer);
+  },[_dailyLog]);
+
   const T=THEMES[themeId]||THEMES.industrial;
   // Active protocol sections depend on mainTab
   const activeSections=isPW?SECTIONS_PW56:SECTIONS;
@@ -1448,7 +1458,7 @@ input,select,textarea,button{font-family:inherit}
     {/* ─── TAB: INTERVENȚII ZILNICE ─── */}
     {mainTab==="interventii"&&<div style={{flex:1,overflowY:"auto",padding:"16px 20px"}}>
       <div style={{maxWidth:1000,margin:"0 auto",background:T.surface,borderRadius:10,padding:"20px 24px",boxShadow:T.cardShadow}}>
-        <DailyLogView T={T} dailyLog={dailyLog} setDailyLog={setDailyLog}/>
+        <DailyLogView T={T} dailyLog={dailyLog} setDailyLog={setDailyLog} onCloudSave={()=>{syncDailyLog(dailyLog);syncMM92({themeId:_themeId,cd:_cd,rp:_rp,iss:_iss,bd:_bd,id:_id,sg:_sg,photos:_photos,itemPhotos:_itemPhotos,procedures:_procedures,dailyLog})}}/>
       </div>
     </div>}
 

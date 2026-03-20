@@ -132,7 +132,7 @@ function MediaSection({ entry, upd, T, label = "Fotografii / Video" }) {
     <input ref={vidRef} type="file" accept="video/*" capture="environment" onChange={e => { if (e.target.files) addMedia(e.target.files); e.target.value = ""; }} style={{ display: "none" }} />
     <input ref={galRef} type="file" accept="image/*,video/*" multiple onChange={e => { if (e.target.files) addMedia(e.target.files); e.target.value = ""; }} style={{ display: "none" }} />
     {media.length === 0 && <div style={{ padding: 12, textAlign: "center", color: T.textMuted, fontSize: 12, background: T.surfaceAlt, borderRadius: 8 }}>Fără fișiere media.</div>}
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(120,1fr))", gap: 6 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(100,1fr))", gap: 6, maxWidth: 500 }}>
       {media.map(m => (<div key={m.id} style={{ position: "relative", borderRadius: 8, overflow: "hidden", border: `1px solid ${m.type === "video" ? T.accent : T.border}` }}>
         {m.type === "video" ? (
           <div onClick={() => { const w = window.open(); w.document.write(`<video src="${m.data}" controls autoplay style="max-width:100%;max-height:100vh;margin:auto;display:block"/>`); }}
@@ -234,12 +234,22 @@ h1{font-size:18px;color:#0c1929;border-bottom:3px solid #2563eb;padding-bottom:6
 }
 
 // ─── MAIN COMPONENT ───
-export default function DailyLog({ T, dailyLog, setDailyLog }) {
+export default function DailyLog({ T, dailyLog, setDailyLog, onCloudSave }) {
   const today = new Date().toISOString().slice(0, 10);
   const [subTab, setSubTab] = useState("local"); // local | remote
   const [activeId, setActiveId] = useState(null);
   const [filterDate, setFilterDate] = useState("");
   const [filterPark, setFilterPark] = useState("");
+  const [saveStatus, setSaveStatus] = useState("");
+
+  const manualSave = () => {
+    if (onCloudSave) {
+      setSaveStatus("Se salvează...");
+      onCloudSave();
+      setTimeout(() => setSaveStatus("☁️ Salvat " + new Date().toLocaleTimeString("ro-RO")), 1500);
+      setTimeout(() => setSaveStatus(""), 5000);
+    }
+  };
 
   const addEntry = (mode) => {
     const ne = {
@@ -300,6 +310,10 @@ export default function DailyLog({ T, dailyLog, setDailyLog }) {
           WhatsApp
         </button>
         <button onClick={() => dup(active)} style={{ padding: "8px 12px", border: `1px solid ${T.border}`, borderRadius: 8, background: T.surface, cursor: "pointer", fontSize: 12 }}>Duplică</button>
+        {onCloudSave && <button onClick={manualSave} style={{ padding: "8px 12px", border: `1px solid ${T.ok}44`, borderRadius: 8, background: `${T.ok}12`, cursor: "pointer", fontSize: 12, color: T.ok, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+          {saveStatus || "Salvare ☁️"}
+        </button>}
         <button onClick={() => del(active.id)} style={{ padding: "8px 12px", border: `1px solid ${T.nok}44`, borderRadius: 8, background: T.nokBg, cursor: "pointer", fontSize: 12, color: T.nok, fontWeight: 600 }}>Șterge</button>
       </div>
 
