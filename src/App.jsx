@@ -3,6 +3,7 @@ import { ClipboardList, AlertTriangle, BarChart3, ShieldCheck, Search, Wrench, S
 import { SECTIONS_PW56 } from "./data/sectionsPW56";
 import { FLEET, getAllTurbines, getParks } from "./data/fleet";
 import { syncMM92, syncPW56, syncDailyLog, syncHistoryMM92, syncHistoryPW56, syncCustomNames, loadAllFromCloud, onSyncStatusChange, KEYS } from "./lib/cloudSync";
+import { generateAlerts } from "./lib/alerts";
 
 const AIAssistantLazy = lazy(() => import("./components/AIAssistant"));
 function AIAssistantView({T,dailyLog}){
@@ -25,8 +26,8 @@ function VisualGalleryView({T}){
 }
 
 const WelcomeLazy = lazy(() => import("./components/Welcome"));
-function WelcomeView({T,onNavigate,stats}){
-  return <Suspense fallback={null}><WelcomeLazy T={T} onNavigate={onNavigate} stats={stats}/></Suspense>;
+function WelcomeView({T,onNavigate,stats,alerts}){
+  return <Suspense fallback={null}><WelcomeLazy T={T} onNavigate={onNavigate} stats={stats} alerts={alerts}/></Suspense>;
 }
 
 const DailyLogLazy = lazy(() => import("./components/DailyLog"));
@@ -1167,7 +1168,7 @@ input,select,textarea,button{font-family:inherit}
     <div style={{flex:1,display:"flex",overflow:"hidden"}}>
 
     {/* ─── TAB: HOME ─── */}
-    {mainTab==="home"&&<WelcomeView T={T} stats={{
+    {mainTab==="home"&&<WelcomeView T={T} alerts={generateAlerts(dailyLog, cd, pwCd, rp, pwRp)} stats={{
       localCount:dailyLog.filter(e=>(e.mode||"local")==="local").length||undefined,
       remoteCount:dailyLog.filter(e=>e.mode==="remote").length||undefined,
       totalInterventions:dailyLog.length,

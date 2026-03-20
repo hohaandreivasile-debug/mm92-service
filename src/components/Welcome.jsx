@@ -1,7 +1,13 @@
 // src/components/Welcome.jsx — Welcome dashboard with quick access to all features
-import { Wind, ClipboardList, FileText, Camera, Zap, BookOpen, CalendarDays, Monitor } from "lucide-react";
+import { useState } from "react";
+import { Wind, ClipboardList, FileText, Camera, Zap, BookOpen, CalendarDays, Monitor, AlertTriangle, Bell, ChevronDown, ChevronUp } from "lucide-react";
 
-export default function Welcome({ T, onNavigate, stats = {} }) {
+export default function Welcome({ T, onNavigate, stats = {}, alerts = [] }) {
+  const [showAllAlerts, setShowAllAlerts] = useState(false);
+  const criticalCount = alerts.filter(a => a.type === "critical").length;
+  const warningCount = alerts.filter(a => a.type === "warning").length;
+  const visibleAlerts = showAllAlerts ? alerts : alerts.slice(0, 5);
+
   const cards = [
     { id: "interventii_local", tab: "interventii", icon: CalendarDays, color: "#2563eb", label: "Intervenții Locale", desc: "Raportare intervenții pe teren", stat: stats.localCount },
     { id: "interventii_remote", tab: "interventii_remote", icon: Monitor, color: "#7c3aed", label: "Intervenții Remote", desc: "Monitorizare și reset SCADA", stat: stats.remoteCount },
@@ -50,6 +56,41 @@ export default function Welcome({ T, onNavigate, stats = {} }) {
             ))}
           </div>
         </div>
+
+        {/* Alerts & Insights */}
+        {alerts.length > 0 && <div style={{ marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <Bell size={18} color={criticalCount > 0 ? T.nok : T.warn} />
+            <span style={{ fontSize: 15, fontWeight: 700, color: T.text }}>Alerte & Recomandări</span>
+            <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 6, background: criticalCount > 0 ? `${T.nok}22` : `${T.warn}22`, color: criticalCount > 0 ? T.nok : T.warn, fontWeight: 600 }}>
+              {criticalCount > 0 ? `${criticalCount} critice` : ""}{criticalCount > 0 && warningCount > 0 ? " · " : ""}{warningCount > 0 ? `${warningCount} atenționări` : ""}
+              {criticalCount === 0 && warningCount === 0 ? `${alerts.length} info` : ""}
+            </span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {visibleAlerts.map((alert, i) => {
+              const colors = { critical: { bg: `${T.nok}12`, border: T.nok, icon: T.nok, text: T.nok }, warning: { bg: `${T.warn}12`, border: T.warn, icon: T.warn, text: T.warn }, info: { bg: `${T.accent}08`, border: T.accent, icon: T.accent, text: T.accent } };
+              const c = colors[alert.type] || colors.info;
+              return (
+                <div key={i} style={{ padding: "10px 14px", background: c.bg, borderLeft: `3px solid ${c.border}`, borderRadius: 8, display: "flex", gap: 10, alignItems: "flex-start" }}>
+                  <AlertTriangle size={16} color={c.icon} style={{ flexShrink: 0, marginTop: 2 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 4, background: `${c.border}22`, color: c.text, fontWeight: 700, textTransform: "uppercase" }}>{alert.category}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{alert.title}</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: T.textSec, marginTop: 3, lineHeight: 1.5 }}>{alert.message}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {alerts.length > 5 && (
+            <button onClick={() => setShowAllAlerts(p => !p)} style={{ width: "100%", padding: "8px", marginTop: 6, border: `1px solid ${T.border}`, borderRadius: 8, background: T.surface, color: T.textSec, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+              {showAllAlerts ? <><ChevronUp size={14} /> Afișează mai puțin</> : <><ChevronDown size={14} /> Toate alertele ({alerts.length})</>}
+            </button>
+          )}
+        </div>}
 
         {/* Quick access grid */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12 }}>
