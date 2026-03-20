@@ -394,8 +394,11 @@ function ItemMedia({itemId,photos,onAdd,onRemove,T}){
   </div>);
 }
 
-function CheckItem({item,data,onChange,depth=0,T,itemPhotos,onAddPhoto,onRemovePhoto}){
+function CheckItem({item,data,onChange,depth=0,T,itemPhotos,onAddPhoto,onRemovePhoto,onEditItem,customNames}){
   const v=data[item.id]||{};const u=(f,val)=>onChange(item.id,{...v,[f]:val});
+  const editBtn=(title,cb)=>(<button onClick={e=>{e.stopPropagation();cb()}} title={title} style={{width:20,height:20,border:"none",background:"transparent",cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0,opacity:0.4}}>
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={T.textMuted} strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+  </button>);
   return(<div style={{marginLeft:depth*14,marginBottom:3}}>
     <div style={{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 14px",
       background:v.ok?T.okBg:v.ok===false?T.nokBg:(depth===0?T.surfaceAlt:T.surface),
@@ -403,12 +406,17 @@ function CheckItem({item,data,onChange,depth=0,T,itemPhotos,onAddPhoto,onRemoveP
       <input type="checkbox" checked={v.ok||false} onChange={e=>u("ok",e.target.checked)}
         style={{marginTop:2,accentColor:T.accent,width:22,height:22,flexShrink:0,cursor:"pointer"}}/>
       <div style={{flex:1,minWidth:0}}>
-        <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+        <div style={{display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
           <span style={{fontWeight:700,color:T.accent,fontSize:13}}>{item.id}</span>
           <span style={{color:T.text,fontSize:14,fontWeight:500}}>{item.name}</span>
-          {item.interval&&<span style={{fontSize:11,padding:"2px 8px",borderRadius:4,background:(IC[item.interval]||"#666")+"22",color:IC[item.interval]||"#666",fontWeight:700}}>{IL[item.interval]||item.interval}</span>}
+          {onEditItem&&editBtn("Editare nume",()=>{const n=prompt("Denumire:",item.name);if(n!==null)onEditItem(item.id,"name",n)})}
+          {item.interval&&<span style={{fontSize:11,padding:"2px 8px",borderRadius:4,background:(IC[item.interval]||"#666")+"22",color:IC[item.interval]||"#666",fontWeight:700,cursor:onEditItem?"pointer":"default"}}
+            onClick={onEditItem?()=>{const n=prompt("Interval (sem, anual, 2ani, 3ani, 5ani, 10ani, prim, necesitate):",item.interval);if(n!==null)onEditItem(item.id,"interval",n)}:undefined}>{IL[item.interval]||item.interval}</span>}
         </div>
-        {item.note&&<div style={{fontSize:12,color:T.textMuted,marginTop:2,fontStyle:"italic"}}>{item.note}</div>}
+        {item.note&&<div style={{fontSize:12,color:T.textMuted,marginTop:2,fontStyle:"italic",display:"flex",alignItems:"flex-start",gap:2}}>
+          <span style={{flex:1}}>{item.note}</span>
+          {onEditItem&&editBtn("Editare notă",()=>{const n=prompt("Notă/instrucțiuni:",item.note);if(n!==null)onEditItem(item.id,"note",n)})}
+        </div>}
         <div style={{display:"flex",flexWrap:"wrap",gap:8,marginTop:5,alignItems:"center"}}>
           {item.hasResult&&<select value={v.result||""} onChange={e=>u("result",e.target.value)} style={{fontSize:13,padding:"6px 10px",border:`1px solid ${T.border}`,borderRadius:5,background:T.surface,color:T.text,minHeight:36}}><option value="">—Rezultat—</option><option value="ok">✓ OK</option><option value="nok">✗ Probleme</option></select>}
           {item.hasValueField&&<div style={{display:"flex",alignItems:"center",gap:4}}><span style={{fontSize:12,color:T.textSec}}>{item.valueLabel}:</span><input type="text" value={v.value||""} onChange={e=>u("value",e.target.value)} style={{width:80,fontSize:13,padding:"6px 8px",border:`1px solid ${T.border}`,borderRadius:5,background:T.surface,color:T.text,minHeight:36}}/></div>}
@@ -424,7 +432,10 @@ function CheckItem({item,data,onChange,depth=0,T,itemPhotos,onAddPhoto,onRemoveP
         <ItemMedia itemId={item.id} photos={itemPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} T={T}/>
       </div>
     </div>
-    {item.subs?.map(s=><CheckItem key={s.id} item={s} data={data} onChange={onChange} depth={depth+1} T={T} itemPhotos={itemPhotos} onAddPhoto={onAddPhoto} onRemovePhoto={onRemovePhoto}/>)}
+    {item.subs?.map(s=>{
+      const so={...s,name:customNames?.[`item_${s.id}`]||s.name,interval:customNames?.[`interval_${s.id}`]||s.interval,note:customNames?.[`note_${s.id}`]||s.note};
+      return <CheckItem key={s.id} item={so} data={data} onChange={onChange} depth={depth+1} T={T} itemPhotos={itemPhotos} onAddPhoto={onAddPhoto} onRemovePhoto={onRemovePhoto} onEditItem={onEditItem} customNames={customNames}/>;
+    })}
   </div>);
 }
 
@@ -946,6 +957,14 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
   };
   const getName=(section)=>customNames[section.id]||section.title;
   const getItemName=(item)=>customNames[`item_${item.id}`]||item.name;
+  const getItemInterval=(item)=>customNames[`interval_${item.id}`]||item.interval;
+  const getItemNote=(item)=>customNames[`note_${item.id}`]||item.note;
+
+  // Edit item properties (name, interval, note)
+  const editItem=(itemId,field,value)=>{
+    const key=field==="name"?`item_${itemId}`:field==="interval"?`interval_${itemId}`:`note_${itemId}`;
+    saveCustomName(key,value);
+  };
 
   // Pick source: online → session, offline → local state
   const themeId = online ? session.themeId : _themeId;
@@ -1365,7 +1384,7 @@ export default function App({ session, user, profile, signOut, onChangeTurbine, 
         {(as==="procedures"||as==="pw_procedures")&&<ProceduresView T={T} procedures={pProcedures} setProcedures={pSetProcedures} uploadToCloud={online?session.uploadProcedure:null}/>}
 
         {sec?.items?.length>0&&<div style={{display:"flex",flexDirection:"column",gap:4}}>
-          {sec.items.map(item=><CheckItem key={item.id} item={{...item,name:getItemName(item)}} data={pCd} onChange={hc} T={T} itemPhotos={pItemPhotos} onAddPhoto={addItemPhoto} onRemovePhoto={removeItemPhoto}/>)}</div>}
+          {sec.items.map(item=><CheckItem key={item.id} item={{...item,name:getItemName(item),interval:getItemInterval(item),note:getItemNote(item)}} data={pCd} onChange={hc} T={T} itemPhotos={pItemPhotos} onAddPhoto={addItemPhoto} onRemovePhoto={removeItemPhoto} onEditItem={editItem} customNames={customNames}/>)}</div>}
       </div>
     </div>
     </>}
